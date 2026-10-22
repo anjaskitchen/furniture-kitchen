@@ -1,0 +1,115 @@
+@import "@fontsource-variable/inter/index.css";
+@import "@fontsource-variable/manrope/index.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-inter: "Inter Variable";
+  --font-manrope: "Manrope Variable";
+}
+
+@layer base {
+  html {
+    @apply scroll-smooth antialiased;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply bg-cream-50 text-charcoal-900 font-sans dark:bg-charcoal-950 dark:text-cream-100;
+  }
+  h1, h2, h3, h4 {
+    @apply font-display tracking-tight;
+  }
+  :focus-visible {
+    @apply outline-none ring-2 ring-bronze-400 ring-offset-2 ring-offset-cream-50 dark:ring-offset-charcoal-950;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-60;
+  }
+  .btn-primary {
+    @apply btn bg-charcoal-900 text-cream-50 hover:bg-wood-600 hover:shadow-soft dark:bg-cream-100 dark:text-charcoal-900 dark:hover:bg-bronze-300;
+  }
+  .btn-accent {
+    @apply btn bg-wood-500 text-white hover:bg-wood-600 hover:shadow-soft;
+  }
+  .btn-outline {
+    @apply btn border border-charcoal-900/20 text-charcoal-900 hover:border-charcoal-900 hover:bg-charcoal-900 hover:text-cream-50 dark:border-cream-100/30 dark:text-cream-100 dark:hover:bg-cream-100 dark:hover:text-charcoal-900;
+  }
+  .btn-whatsapp {
+    @apply btn bg-[#1FAF38] text-white hover:bg-[#178a2c] hover:shadow-soft;
+  }
+  .btn-sm {
+    @apply px-4 py-2 text-xs;
+  }
+  .card {
+    @apply rounded-2xl bg-white shadow-card ring-1 ring-charcoal-900/5 dark:bg-charcoal-900 dark:ring-white/10;
+  }
+  .input {
+    @apply w-full rounded-xl border border-charcoal-900/15 bg-white px-4 py-3 text-base text-charcoal-900 placeholder:text-charcoal-700/50 transition focus:border-wood-500 focus:outline-none focus:ring-2 focus:ring-wood-500/20 dark:border-white/15 dark:bg-charcoal-900 dark:text-cream-100 sm:text-sm;
+  }
+  .label {
+    @apply mb-1.5 block text-sm font-medium text-charcoal-800 dark:text-cream-200;
+  }
+  .eyebrow {
+    @apply text-xs font-semibold uppercase tracking-[0.2em] text-wood-500 dark:text-bronze-300;
+  }
+  .section {
+    @apply py-16 sm:py-24;
+  }
+  .section-title {
+    @apply text-3xl font-bold sm:text-4xl;
+  }
+  .chip {
+    @apply inline-flex items-center rounded-full border border-charcoal-900/10 px-4 py-2 text-sm transition hover:border-wood-500 hover:text-wood-600 dark:border-white/15 dark:hover:text-bronze-300;
+  }
+  .chip-active {
+    @apply border-charcoal-900 bg-charcoal-900 text-cream-50 hover:text-cream-50 dark:border-cream-100 dark:bg-cream-100 dark:text-charcoal-900 dark:hover:text-charcoal-900;
+  }
+  .prose-simple p {
+    @apply mb-4 leading-relaxed text-charcoal-700 dark:text-cream-200/80;
+  }
+}
+
+/* Swiper theming */
+.swiper {
+  --swiper-theme-color: #9a6b43;
+  --swiper-navigation-size: 18px;
+  --swiper-pagination-bullet-inactive-color: #1c1c1c;
+  --swiper-pagination-bullet-inactive-opacity: 0.2;
+}
+.swiper-button-next,
+.swiper-button-prev {
+  @apply !h-10 !w-10 rounded-full bg-white/90 !text-charcoal-900 shadow-card backdrop-blur transition hover:bg-white;
+}
+.swiper-button-next svg,
+.swiper-button-prev svg {
+  @apply !h-4 !w-4;
+}
+.swiper-button-disabled {
+  @apply !opacity-0;
+}
+.swiper-pagination {
+  @apply !relative !mt-6;
+}
+
+/* Reveal on scroll */
+.reveal {
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
