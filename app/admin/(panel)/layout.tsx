@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { logoutAction } from "@/app/admin/actions";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
+import { accountLabel } from "@/lib/admin/accounts";
 import { requireAdminPage } from "@/lib/admin/auth";
 import { countRows } from "@/lib/admin/data";
 import { getSettings } from "@/services/data";
@@ -17,7 +18,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <div className="card max-w-md p-8">
           <h1 className="text-2xl font-bold">Akses ditolak</h1>
           <p className="mt-3 text-sm text-charcoal-700">
-            Akun <strong>{user.email}</strong> belum memiliki role admin. Minta admin utama menambahkan role, atau jalankan SQL di README bagian &quot;Cara membuat admin&quot;.
+            Akun <strong>{accountLabel(user)}</strong> belum memiliki role admin. Minta admin utama mengubah role di menu Admin User, atau jalankan <code>npm run admin:create</code> (README bagian &quot;Cara membuat admin&quot;).
           </p>
           <div className="mt-6 flex justify-center gap-2">
             <Link href="/" className="btn-outline">Ke website</Link>
@@ -39,7 +40,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     <div className="min-h-screen bg-cream-100 text-charcoal-900">
       <AdminSidebar
         businessName={settings.business_name}
-        userEmail={user.email}
+        userLabel={accountLabel(user)}
         badges={{ "/admin/submissions": pendingSubs, "/admin/surveys": newSurveys, "/admin/messages": newMessages }}
       />
       <div className="lg:pl-64">

@@ -16,7 +16,7 @@ export const getCurrentUser = cache(async (): Promise<AppUser | null> => {
   } = await sb.auth.getUser();
   if (!user) return null;
   const { data } = await sb.from("users").select("*").eq("id", user.id).maybeSingle();
-  return (data as AppUser | null) ?? { id: user.id, email: user.email ?? "", full_name: null, role: "customer", created_at: user.created_at };
+  return (data as AppUser | null) ?? { id: user.id, email: user.email ?? "", username: null, full_name: null, role: "customer", created_at: user.created_at };
 });
 
 /** Untuk halaman admin: redirect ke login jika belum login. */

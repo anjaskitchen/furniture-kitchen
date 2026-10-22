@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { internalEmail, isInternalEmail, USERNAME_HINT, USERNAME_PATTERN } from "@/lib/admin/accounts";
 import { assertAdmin, AuthError } from "@/lib/admin/auth";
 import { RESOURCES } from "@/lib/admin/resources";
 import { buildSchema, fillSlugs } from "@/lib/admin/schema";
@@ -28,17 +29,34 @@ function revalidateResource(paths: string[]) {
 // ---------------------------------------------------------------------------
 // AUTH
 // ---------------------------------------------------------------------------
-const loginSchema = z.object({ email: z.string().email("Email tidak valid"), password: z.string().min(6, "Password minimal 6 karakter") });
+const loginSchema = z.object({
+  login: z.string().trim().min(3, "Isi username atau email").max(254),
+  password: z.string().min(1, "Isi password").max(200),
+});
+const LOGIN_FAILED = "Username/email atau password salah";
 
+/** Login dengan email atau username. Username diterjemahkan ke email login di server (service role). */
 export async function loginAction(_: unknown, form: FormData): Promise<ActionResult> {
   const h = await headers();
   const rl = rateLimit(`login:${clientIp(h)}`, 8, 15 * 60_000);
   if (!rl.ok) return { ok: false, error: "Terlalu banyak percobaan login. Coba lagi nanti." };
-  const parsed = loginSchema.safeParse({ email: form.get("email"), password: form.get("password") });
+  const parsed = loginSchema.safeParse({ login: form.get("login") ?? form.get("email"), password: form.get("password") });
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message };
+
+  const login = parsed.data.login.toLowerCase();
+  let email = login.includes("@") ? login : null;
+  if (!email) {
+    const admin = createAdminClient();
+    if (!admin) return { ok: false, error: "Login dengan username butuh SUPABASE_SERVICE_ROLE_KEY di server" };
+    const { data } = await admin.from("users").select("email").eq("username", login).maybeSingle();
+    // Pesan gagal sama persis agar tidak bisa dipakai menebak username yang terdaftar.
+    if (!data?.email) return { ok: false, error: LOGIN_FAILED };
+    email = data.email as string;
+  }
+
   const sb = await createClient();
-  const { error } = await sb.auth.signInWithPassword(parsed.data);
-  if (error) return { ok: false, error: "Email atau password salah" };
+  const { error } = await sb.auth.signInWithPassword({ email, password: parsed.data.password });
+  if (error) return { ok: false, error: LOGIN_FAILED };
   const next = String(form.get("next") ?? "/admin");
   redirect(next.startsWith("/admin") ? next : "/admin");
 }
@@ -322,37 +340,123 @@ export async function saveSettings(values: Record<string, unknown>): Promise<Act
 }
 
 // ---------------------------------------------------------------------------
-// ADMIN USER (khusus role admin)
+// AKUN ADMIN (CRUD: admin kelola semua akun, editor hanya akun sendiri)
 // ---------------------------------------------------------------------------
-const newUserSchema = z.object({
-  email: z.string().trim().email("Email tidak valid"),
-  full_name: z.string().trim().max(100).optional(),
-  password: z.string().min(10, "Password minimal 10 karakter"),
-  role: z.enum(["admin", "editor"]),
-});
+const usernameField = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .refine((v) => v === "" || USERNAME_PATTERN.test(v), `Username: ${USERNAME_HINT}`)
+  .transform((v) => v || null);
+const emailField = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .refine((v) => v === "" || z.string().email().safeParse(v).success, "Email tidak valid")
+  .refine((v) => !isInternalEmail(v), "Domain email ini khusus sistem")
+  .transform((v) => v || null);
+const passwordField = z.string().min(8, "Password minimal 8 karakter").max(72, "Password maksimal 72 karakter");
 
-export async function createAdminUser(values: unknown): Promise<ActionResult> {
+const accountSchema = z
+  .object({
+    username: usernameField,
+    email: emailField,
+    full_name: z.string().trim().max(100).transform((v) => v || null),
+    role: z.enum(["admin", "editor", "customer"]),
+  })
+  .refine((v) => v.username || v.email, { message: "Isi username atau email (minimal salah satu)", path: ["username"] });
+
+function accountErrors(error: z.ZodError): ActionResult {
+  const fieldErrors: Record<string, string> = {};
+  for (const i of error.issues) fieldErrors[String(i.path[0] ?? "form")] ??= i.message;
+  return { ok: false, error: Object.values(fieldErrors)[0] ?? "Periksa kembali isian", fieldErrors };
+}
+
+function accountFail(e: unknown): ActionResult {
+  const msg = e instanceof Error ? e.message : String(e);
+  if (/users_username_key|duplicate key.*username/i.test(msg)) return { ok: false, error: "Username sudah dipakai akun lain", fieldErrors: { username: "Username sudah dipakai" } };
+  if (/already been registered|already registered|email_exists|users_email/i.test(msg)) return { ok: false, error: "Email sudah dipakai akun lain", fieldErrors: { email: "Email sudah dipakai" } };
+  return fail(e);
+}
+
+export async function createAdminUser(values: Record<string, unknown>): Promise<ActionResult> {
   try {
     await assertAdmin(true);
-    const parsed = newUserSchema.safeParse(values);
-    if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message };
+    const parsed = accountSchema.safeParse(values);
+    if (!parsed.success) return accountErrors(parsed.error);
+    const pw = passwordField.safeParse(values.password ?? "");
+    if (!pw.success) return { ok: false, error: pw.error.issues[0].message, fieldErrors: { password: pw.error.issues[0].message } };
     const admin = createAdminClient();
     if (!admin) return { ok: false, error: "SUPABASE_SERVICE_ROLE_KEY belum diisi di environment server" };
+
+    const { username, email, full_name, role } = parsed.data;
+    if (username) {
+      const { data: taken } = await admin.from("users").select("id").eq("username", username).maybeSingle();
+      if (taken) return { ok: false, error: "Username sudah dipakai akun lain", fieldErrors: { username: "Username sudah dipakai" } };
+    }
     const { data, error } = await admin.auth.admin.createUser({
-      email: parsed.data.email,
-      password: parsed.data.password,
+      email: email ?? internalEmail(username!),
+      password: pw.data,
       email_confirm: true,
-      user_metadata: { full_name: parsed.data.full_name ?? "" },
+      user_metadata: { full_name: full_name ?? "", username },
     });
-    if (error || !data.user) throw new Error(error?.message ?? "Gagal membuat user");
-    const { error: e2 } = await admin
-      .from("users")
-      .upsert({ id: data.user.id, email: parsed.data.email, full_name: parsed.data.full_name ?? null, role: parsed.data.role });
-    if (e2) throw new Error(e2.message);
+    if (error || !data.user) throw new Error(error?.message ?? "Gagal membuat akun");
+    const { error: e2 } = await admin.from("users").upsert({ id: data.user.id, email: data.user.email!, username, full_name, role });
+    if (e2) {
+      await admin.auth.admin.deleteUser(data.user.id);
+      throw new Error(e2.message);
+    }
     revalidatePath("/admin/users");
-    return { ok: true, message: "Admin baru dibuat" };
+    return { ok: true, message: `Akun ${username ?? email} dibuat` };
   } catch (e) {
-    return fail(e);
+    return accountFail(e);
+  }
+}
+
+/** Ubah akun: username, email, nama, role, dan (opsional) password baru. */
+export async function updateAdminUser(userId: string, values: Record<string, unknown>): Promise<ActionResult> {
+  try {
+    const me = await assertAdmin();
+    if (!z.string().uuid().safeParse(userId).success) return { ok: false, error: "ID tidak valid" };
+    const isSelf = me.id === userId;
+    if (me.role !== "admin" && !isSelf) return { ok: false, error: "Editor hanya bisa mengubah akunnya sendiri" };
+
+    const parsed = accountSchema.safeParse({ ...values, role: values.role ?? me.role });
+    if (!parsed.success) return accountErrors(parsed.error);
+    const newPassword = String(values.password ?? "");
+    if (newPassword) {
+      const pw = passwordField.safeParse(newPassword);
+      if (!pw.success) return { ok: false, error: pw.error.issues[0].message, fieldErrors: { password: pw.error.issues[0].message } };
+    }
+    const admin = createAdminClient();
+    if (!admin) return { ok: false, error: "SUPABASE_SERVICE_ROLE_KEY belum diisi di environment server" };
+
+    const { data: current } = await admin.from("users").select("*").eq("id", userId).single();
+    if (!current) return { ok: false, error: "Akun tidak ditemukan" };
+    const { username, email, full_name } = parsed.data;
+    // Role hanya bisa diubah admin, dan tidak untuk akun sendiri (mencegah terkunci tanpa admin).
+    const role = me.role === "admin" && !isSelf ? parsed.data.role : current.role;
+
+    if (username && username !== current.username) {
+      const { data: taken } = await admin.from("users").select("id").eq("username", username).neq("id", userId).maybeSingle();
+      if (taken) return { ok: false, error: "Username sudah dipakai akun lain", fieldErrors: { username: "Username sudah dipakai" } };
+    }
+    // Tanpa email asli, alamat login internal mengikuti username.
+    const loginEmail = email ?? internalEmail(username!);
+    const authPatch: { email?: string; password?: string; email_confirm?: boolean; user_metadata: Record<string, unknown> } = {
+      user_metadata: { full_name: full_name ?? "", username },
+    };
+    if (loginEmail !== current.email) Object.assign(authPatch, { email: loginEmail, email_confirm: true });
+    if (newPassword) authPatch.password = newPassword;
+    const { error: ae } = await admin.auth.admin.updateUserById(userId, authPatch);
+    if (ae) throw new Error(ae.message);
+
+    const { error: pe } = await admin.from("users").update({ username, email: loginEmail, full_name, role }).eq("id", userId);
+    if (pe) throw new Error(pe.message);
+    revalidatePath("/admin", "layout");
+    return { ok: true, message: newPassword ? "Akun & password diperbarui" : "Akun diperbarui" };
+  } catch (e) {
+    return accountFail(e);
   }
 }
 
@@ -374,13 +478,14 @@ export async function setUserRole(userId: string, role: "customer" | "editor" | 
 export async function deleteAdminUser(userId: string): Promise<ActionResult> {
   try {
     const me = await assertAdmin(true);
+    if (!z.string().uuid().safeParse(userId).success) return { ok: false, error: "ID tidak valid" };
     if (me.id === userId) return { ok: false, error: "Tidak bisa menghapus akun sendiri" };
     const admin = createAdminClient();
     if (!admin) return { ok: false, error: "SUPABASE_SERVICE_ROLE_KEY belum diisi" };
     const { error } = await admin.auth.admin.deleteUser(userId);
     if (error) throw new Error(error.message);
     revalidatePath("/admin/users");
-    return { ok: true, message: "User dihapus" };
+    return { ok: true, message: "Akun dihapus" };
   } catch (e) {
     return fail(e);
   }

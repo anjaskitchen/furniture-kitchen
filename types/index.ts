@@ -5,6 +5,7 @@ export type Role = "customer" | "editor" | "admin";
 export interface AppUser {
   id: string;
   email: string;
+  username: string | null;
   full_name: string | null;
   role: Role;
   created_at: string;

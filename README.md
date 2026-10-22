@@ -82,7 +82,7 @@ public/icons/, public/sw.js  Ikon PWA (npm run icons) & service worker
 supabase/migrations/       Migrasi SQL berurutan (tabel, relasi, trigger, RLS, storage, grant)
 supabase/seed.sql          Data awal (generated: npm run seed:sql), dijalankan sekali
 scripts/db.mjs             Runner migrasi otomatis (db:migrate / db:seed / db:setup / db:status)
-scripts/create-admin.mjs   Membuat / reset akun admin (npm run admin:create)
+scripts/create-admin.mjs   Membuat / reset akun admin dengan username atau email (npm run admin:create)
 scripts/verify-crud.mjs    Uji end-to-end CRUD + RLS + storage + API (npm run verify)
 tests/                     Unit test kalkulator (npm test)
 middleware.ts              Proteksi /admin + refresh sesi Supabase
@@ -94,7 +94,7 @@ File: [`supabase/migrations/`](supabase/migrations) (dijalankan berurutan oleh `
 
 | Tabel | Isi | Relasi |
 |---|---|---|
-| `users` | Profil + `role` (customer / editor / admin) | `id` → `auth.users.id` (dibuat otomatis oleh trigger saat user baru) |
+| `users` | Profil + `username` (unik, untuk login) + `role` (customer / editor / admin) | `id` → `auth.users.id` (dibuat otomatis oleh trigger saat user baru) |
 | `categories` | Kategori produk | — |
 | `materials` | HPL, Cat Duco, Veneer… + `price_per_meter` | — |
 | `products` | Produk katalog (images[], video, status, view/inquiry count) | `category_id` → categories, `material_id` → materials |
@@ -207,21 +207,22 @@ Script lain: `npm run seed:sql` (generate ulang `supabase/seed.sql` dari `lib/de
 
 ## 6. Cara membuat admin
 
-**Admin pertama** — satu perintah (butuh `SUPABASE_SERVICE_ROLE_KEY` di `.env.local` dan migrasi sudah dijalankan):
+Login admin (`/admin/login`) menerima **username atau email** di satu kolom. Email tidak wajib: akun boleh hanya punya username.
+
+**Admin pertama**: satu perintah (butuh `SUPABASE_SERVICE_ROLE_KEY` di `.env.local` dan migrasi sudah dijalankan):
 ```bash
-npm run admin:create -- --email admin@domain-anda.com --password "PasswordKuat123!" --name "Nama Anda"
+npm run admin:create -- --username anjasfurniture --password "PasswordKuat123"
+# opsional: --email admin@domain.com  --name "Nama"  --role editor
 ```
-Jika email sudah terdaftar, password-nya di-reset dan role di-set `admin`. Tambahkan `--role editor` untuk akun editor. Setelah itu buka `/admin` lalu login.
+Jika username/email sudah terdaftar, password, nama, dan role-nya diperbarui. Perintah yang sama juga dipakai untuk **reset password** jika lupa.
 
-<details><summary>Alternatif manual lewat dashboard Supabase</summary>
+**Kelola akun dari admin panel**: menu **Akun Admin**:
+- **Tambah akun**: isi username dan/atau email (minimal salah satu), nama, role, password (min. 8 karakter).
+- **Edit**: ganti username, email, nama, role, atau password (kosongkan password jika tidak diganti).
+- **Hapus** akun lain. Akun sendiri tidak bisa dihapus dan role-nya tidak bisa diubah sendiri, agar selalu ada admin.
+- Role: `admin` = akses penuh termasuk akun; `editor` = konten, harga, leads (hanya bisa mengubah akunnya sendiri); *tanpa akses* = tidak bisa masuk admin.
 
-1. Supabase → **Authentication → Users → Add user → Create new user** (centang *Auto Confirm User*).
-2. SQL Editor: `update public.users set role = 'admin' where email = 'email-anda@domain.com';`
-</details>
-
-**Admin berikutnya:** login sebagai admin → menu **Admin User** → *Tambah Admin* (butuh `SUPABASE_SERVICE_ROLE_KEY`). Role:
-- `admin` — akses penuh termasuk kelola user.
-- `editor` — kelola konten, harga, leads.
+Username: 3–30 karakter, huruf kecil, angka, titik, garis bawah, atau strip (tidak membedakan huruf besar/kecil saat login). Akun tanpa email memakai alamat internal `<username>@akun.internal` yang tidak ditampilkan. Pesan gagal login selalu sama ("Username/email atau password salah") agar username tidak bisa ditebak, dan login dibatasi 8 percobaan per 15 menit per IP.
 
 ## 6b. Mengatur landing page (CMS)
 

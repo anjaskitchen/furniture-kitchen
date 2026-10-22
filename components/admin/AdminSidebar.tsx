@@ -46,10 +46,10 @@ const MENU = [
   { href: "/admin/surveys", label: "Request Survey", icon: CalendarCheck },
   { href: "/admin/messages", label: "Kontak", icon: Mail },
   { href: "/admin/settings", label: "Pengaturan Website", icon: Settings },
-  { href: "/admin/users", label: "Admin User", icon: Users },
+  { href: "/admin/users", label: "Akun Admin", icon: Users },
 ];
 
-export function AdminSidebar({ businessName, userEmail, badges }: { businessName: string; userEmail: string; badges: Record<string, number> }) {
+export function AdminSidebar({ businessName, userLabel, badges }: { businessName: string; userLabel: string; badges: Record<string, number> }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   useEffect(() => setOpen(false), [pathname]);
@@ -82,7 +82,9 @@ export function AdminSidebar({ businessName, userEmail, badges }: { businessName
         ))}
       </ul>
       <div className="border-t border-white/10 p-4 text-xs text-cream-200/60">
-        <p className="truncate">{userEmail}</p>
+        <Link href="/admin/users" className="block truncate hover:text-white" title="Kelola akun">
+          {userLabel}
+        </Link>
         <div className="mt-3 flex gap-2">
           <Link href="/" target="_blank" className="flex flex-1 items-center justify-center gap-1 rounded-lg border border-white/15 py-2 hover:bg-white/5">
             <ExternalLink className="h-3.5 w-3.5" /> Website

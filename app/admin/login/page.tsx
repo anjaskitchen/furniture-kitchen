@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { LoginForm } from "@/components/admin/LoginForm";
+import { accountLabel } from "@/lib/admin/accounts";
 import { getCurrentUser } from "@/lib/admin/auth";
 import { isSupabaseConfigured } from "@/lib/env";
 
@@ -30,7 +31,7 @@ export default async function LoginPage({ searchParams }: { searchParams: SP }) 
           </div>
         ) : (
           <div className="card p-6">
-            {user && <p className="mb-4 rounded-lg bg-amber-100 p-3 text-xs text-amber-900">Akun {user.email} belum memiliki role admin.</p>}
+            {user && <p className="mb-4 rounded-lg bg-amber-100 p-3 text-xs text-amber-900">Akun {accountLabel(user)} belum memiliki role admin.</p>}
             <LoginForm next={typeof sp.next === "string" ? sp.next : "/admin"} />
           </div>
         )}
