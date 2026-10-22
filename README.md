@@ -17,6 +17,7 @@ Website company profile + katalog + **kalkulator harga dinamis** + **CMS landing
 5. [Cara menjalankan](#5-cara-menjalankan) (termasuk migrasi database otomatis)
 6. [Cara membuat admin](#6-cara-membuat-admin)
    - [Mengatur landing page (CMS)](#6b-mengatur-landing-page-cms)
+   - [Order, omset & laporan KPI](#6c-order-omset--laporan-kpi)
 7. [Cara mengubah harga](#7-cara-mengubah-harga)
 8. [Cara upload katalog](#8-cara-upload-katalog)
 9. [Cara mengatur Google Review](#9-cara-mengatur-google-review)
@@ -83,7 +84,7 @@ supabase/migrations/       Migrasi SQL berurutan (tabel, relasi, trigger, RLS, s
 supabase/seed.sql          Data awal (generated: npm run seed:sql), dijalankan sekali
 scripts/db.mjs             Runner migrasi otomatis (db:migrate / db:seed / db:setup / db:status)
 scripts/create-admin.mjs   Membuat / reset akun admin dengan username atau email (npm run admin:create)
-scripts/verify-crud.mjs    Uji end-to-end CRUD + RLS + storage + API (npm run verify)
+scripts/verify-crud.mjs    Uji end-to-end CRUD + RLS + storage + API + penjualan (npm run verify)
 tests/                     Unit test kalkulator (npm test)
 middleware.ts              Proteksi /admin + refresh sesi Supabase
 ```
@@ -112,6 +113,10 @@ File: [`supabase/migrations/`](supabase/migrations) (dijalankan berurutan oleh `
 | `home_sections` | Section homepage: urutan, tampil/sembunyi, eyebrow/judul/deskripsi, tombol, jumlah item | `key` unik → komponen section |
 | `features` | Poin konten: statistik hero, proses kerja, keunggulan, nilai Tentang Kami (ikon + judul + deskripsi) | — |
 | `faqs` | FAQ homepage (+ structured data FAQPage) | — |
+| `orders` | Order penjualan: nomor otomatis `ORD-YYMM-0001`, customer, project, status, diskon, biaya tambahan, HPP, total & dibayar (dihitung trigger) | `survey_request_id` / `contact_message_id` → lead asal |
+| `order_items` | Item pekerjaan (qty × harga satuan) | `order_id` → orders (cascade) |
+| `order_payments` | DP / termin / pelunasan (tanggal, metode, referensi) | `order_id` → orders (cascade) |
+| `orders_view` | View ringkasan: sisa tagihan, status bayar, laba kotor | — |
 
 **Row Level Security (aktif di semua tabel):**
 - Publik (anon) hanya bisa **membaca** baris yang aktif/published + settings.
@@ -243,6 +248,20 @@ Semua tampilan homepage bisa diubah tanpa coding. Halaman di-revalidate otomatis
 
 Section yang datanya kosong (mis. belum ada video) otomatis disembunyikan, dan latar section selang-seling tetap rapi setelah urutan diubah.
 
+## 6c. Order, omset & laporan KPI
+
+Menu **Penjualan** di admin:
+
+- **Order** — catat order lengkap: customer, project, kategori, sumber order (WhatsApp, website, IG, referensi, dll.), status (*Penawaran → Deal → Produksi → Instalasi → Selesai / Batal*), item pekerjaan (qty desimal mis. `3,5` meter), diskon, biaya tambahan, HPP, dan pembayaran (DP/termin/pelunasan; tombol *Isi sisa tagihan*). Total, sisa tagihan, status bayar & laba kotor dihitung otomatis. Tersedia filter periode/status/pembayaran, pencarian, urutan, tombol WhatsApp ke customer, dan **Invoice** siap cetak/PDF.
+- **Buat order dari lead** — buka Request Survey / Pesan Kontak → *Buat order dari lead ini* (data customer & estimasi terisi otomatis).
+- **Laporan & KPI** — periode *Hari ini, 7/30 hari, Bulan ini, Bulan lalu, Kuartal, Tahun ini, Tahun lalu* atau rentang tanggal bebas, dibandingkan otomatis dengan periode sebelumnya: omset, kas masuk, laba kotor & margin, jumlah order, rata-rata nilai order, piutang & jatuh tempo, order selesai, rasio order/leads, **target omset** (pro-rata per hari, khusus admin mengatur), grafik tren, omset per kategori & sumber, status, order berjalan, dan top customer.
+- **Export Excel** — file `.xlsx` lengkap: *Ringkasan* (KPI dengan rumus perubahan, target, piutang, pipeline, rincian, top customer + **3 grafik Excel native**), *Tren* (+ grafik), *Order* (autofilter, total `SUBTOTAL` yang ikut filter), *Item*, *Pembayaran*, *Piutang* (hari terlambat).
+- **Dashboard** menampilkan ringkasan penjualan bulan ini + progres target.
+
+**Definisi angka (konsisten di layar & Excel):** Omset = total order berstatus Deal/Produksi/Instalasi/Selesai berdasarkan tanggal order (Penawaran & Batal tidak dihitung) · Kas masuk = pembayaran berdasarkan tanggal bayar · Piutang = total − dibayar order terkonfirmasi per hari ini · Laba kotor = omset − HPP · Semua tanggal WIB. Perhitungan dilakukan di database (`order_report`, trigger total) dan diuji di `npm test` & `npm run verify`.
+
+Data penjualan hanya bisa diakses admin/editor (RLS); perubahan order tersinkron realtime antar admin.
+
 ## 7. Cara mengubah harga
 
 Admin → **Harga** (semua harga kalkulator di satu halaman):
@@ -354,4 +373,4 @@ Netlify / hosting Node lain juga bisa (`npm run build` + `npm start`, Node 20.12
 npm run build && npm start                         # terminal 1
 npm run verify -- --site http://localhost:3000     # terminal 2
 ```
-Script membuat user editor sementara, lalu menguji **insert → update → read → delete** di semua tabel konten. Script juga memastikan anon tidak bisa menulis konten, membaca lead, atau menaikkan role; menguji upload & hapus file storage; membuka semua halaman publik; dan mengirim form survey lewat API. Semua data uji dibersihkan otomatis. Hasil terakhir: **70 lulus, 0 gagal**.
+Script membuat user editor sementara, lalu menguji **insert → update → read → delete** di semua tabel konten. Script juga memastikan anon tidak bisa menulis konten, membaca lead, atau menaikkan role; menguji upload & hapus file storage; membuka semua halaman publik; dan mengirim form survey lewat API. Semua data uji dibersihkan otomatis. Termasuk uji penjualan (simpan order via RPC, akurasi total/sisa/laba, nomor order, laporan, akses publik ditolak, hapus cascade). Hasil terakhir: **78 lulus, 0 gagal**.

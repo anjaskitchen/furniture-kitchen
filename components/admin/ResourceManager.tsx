@@ -145,7 +145,7 @@ const LABELS: Record<string, string> = {
 };
 
 /** Detail read-only untuk lead (survey / pesan kontak). */
-function RecordDetails({ row, skip }: { row: Row; skip: string[] }) {
+function RecordDetails({ row, skip, resource }: { row: Row; skip: string[]; resource: string }) {
   const entries = Object.entries(row).filter(([k, v]) => k !== "id" && !skip.includes(k) && v !== null && v !== "" && !(Array.isArray(v) && !v.length));
   const phone = typeof row.phone === "string" ? row.phone.replace(/\D/g, "").replace(/^0/, "62") : "";
   return (
@@ -177,6 +177,11 @@ function RecordDetails({ row, skip }: { row: Row; skip: string[] }) {
         ))}
       </dl>
       <div className="mt-4 flex flex-wrap gap-2">
+        {(resource === "survey_requests" || resource === "contact_messages") && (
+          <a href={`/admin/orders/new?${resource === "survey_requests" ? "survey" : "message"}=${row.id}`} className="btn-primary btn-sm">
+            Buat order dari lead ini
+          </a>
+        )}
         {phone && (
           <a href={`https://wa.me/${phone}`} target="_blank" rel="noopener noreferrer" className="btn-whatsapp btn-sm">
             Balas via WhatsApp
@@ -329,7 +334,7 @@ export function ResourceManager({ resource, rows, options = {}, defaultFilter }:
       />
 
       <AdminModal open={editing !== null} onClose={() => setEditing(null)} title={editing === "new" ? `Tambah ${def.singular}` : `Edit ${def.singular}`}>
-        {def.canCreate === false && editing && editing !== "new" && <RecordDetails row={editing} skip={def.fields.map((f) => f.name)} />}
+        {def.canCreate === false && editing && editing !== "new" && <RecordDetails row={editing} skip={def.fields.map((f) => f.name)} resource={resource} />}
         <form onSubmit={submit} className="grid gap-4 sm:grid-cols-2">
           {def.fields.map((f) => (
             <Field key={f.name} f={f} value={values[f.name]} onChange={(v) => setValues((s) => ({ ...s, [f.name]: v }))} error={errors[f.name]} options={options} />

@@ -1,4 +1,5 @@
 import {
+  BarChart3,
   CalendarCheck,
   Droplets,
   Image as ImageIcon,
@@ -10,6 +11,7 @@ import {
   Mail,
   Package,
   Palette,
+  Receipt,
   Settings,
   Star,
   Tags,
@@ -33,6 +35,13 @@ export const ADMIN_NAV: { title: string; items: AdminNavItem[] }[] = [
     items: [
       { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
       { href: "/admin/landing", label: "Landing Page", icon: LayoutTemplate },
+    ],
+  },
+  {
+    title: "Penjualan",
+    items: [
+      { href: "/admin/orders", label: "Order", icon: Receipt },
+      { href: "/admin/reports", label: "Laporan & KPI", icon: BarChart3 },
     ],
   },
   {

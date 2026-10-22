@@ -13,10 +13,13 @@ import {
   Wallet,
 } from "lucide-react";
 import Link from "next/link";
+import { Delta } from "@/components/admin/orders/ui";
 import { accountLabel } from "@/lib/admin/accounts";
 import { requireAdminPage } from "@/lib/admin/auth";
 import { countRows } from "@/lib/admin/data";
+import { getMonthlyTarget, getOrderReport } from "@/lib/admin/orders-data";
 import { formatDateID, formatRupiah } from "@/lib/format";
+import { formatCompactRupiah, presetRange, targetForPeriod } from "@/lib/orders";
 import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
 import { getSettings } from "@/services/data";
@@ -55,7 +58,10 @@ export default async function Dashboard() {
   since.setMonth(since.getMonth() - 5, 1);
   since.setHours(0, 0, 0, 0);
 
+  const month = presetRange("this_month");
   const [
+    sales,
+    monthlyTarget,
     settings,
     products,
     portfolio,
@@ -72,6 +78,8 @@ export default async function Dashboard() {
     productImages,
     portfolioImages,
   ] = await Promise.all([
+    getOrderReport(month.from, month.to),
+    getMonthlyTarget(),
     getSettings(),
     countRows("products"),
     countRows("portfolio"),
@@ -142,8 +150,12 @@ export default async function Dashboard() {
     { label: "Portfolio", value: portfolio, sub: "project", icon: ImageIcon, href: "/admin/portfolio" },
   ];
 
+  const monthTarget = targetForPeriod(monthlyTarget, month.from, month.to);
+  const activeOrders = sales?.pipeline.filter((p) => p.status !== "quotation").reduce((a, p) => a + Number(p.orders), 0) ?? 0;
+
   const quick = [
-    { label: "Tambah produk", href: "/admin/products", icon: Plus },
+    { label: "Order baru", href: "/admin/orders/new", icon: Plus },
+    { label: "Tambah produk", href: "/admin/products", icon: Package },
     { label: "Ubah harga", href: "/admin/prices", icon: Wallet },
     { label: "Atur landing page", href: "/admin/landing", icon: LayoutTemplate },
   ];
@@ -182,6 +194,54 @@ export default async function Dashboard() {
               <ArrowUpRight className="h-4 w-4 opacity-60 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:opacity-100" />
             </Link>
           ))}
+        </section>
+      )}
+
+      {sales && (
+        <section aria-label="Penjualan bulan ini" className="mb-6 rounded-2xl bg-charcoal-900 p-5 text-cream-50 sm:p-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="font-display text-lg font-semibold">Penjualan bulan ini</h2>
+            <Link href="/admin/reports" className="inline-flex items-center gap-1 text-sm text-bronze-300 hover:underline">
+              Laporan lengkap <ArrowUpRight className="h-4 w-4" />
+            </Link>
+          </div>
+          <dl className="mt-5 grid grid-cols-2 gap-x-4 gap-y-5 lg:grid-cols-4">
+            <div>
+              <dt className="text-xs text-cream-200/70">Omset</dt>
+              <dd className="mt-1 font-display text-2xl font-bold tabular-nums">{formatCompactRupiah(sales.current.revenue)}</dd>
+              <dd className="mt-0.5 text-xs text-cream-200/70">
+                <Delta current={sales.current.revenue} previous={sales.previous.revenue} /> vs bulan lalu
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs text-cream-200/70">Kas masuk</dt>
+              <dd className="mt-1 font-display text-2xl font-bold tabular-nums">{formatCompactRupiah(sales.current.cash_in)}</dd>
+              <dd className="mt-0.5 text-xs text-cream-200/70">{sales.current.payments} pembayaran</dd>
+            </div>
+            <div>
+              <dt className="text-xs text-cream-200/70">Piutang</dt>
+              <dd className="mt-1 font-display text-2xl font-bold tabular-nums">{formatCompactRupiah(sales.receivables.amount)}</dd>
+              <dd className={cn("mt-0.5 text-xs", sales.receivables.overdue_orders ? "text-red-300" : "text-cream-200/70")}>
+                {sales.receivables.overdue_orders ? `${sales.receivables.overdue_orders} lewat jatuh tempo` : `${sales.receivables.orders} belum lunas`}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs text-cream-200/70">Order berjalan</dt>
+              <dd className="mt-1 font-display text-2xl font-bold tabular-nums">{activeOrders}</dd>
+              <dd className="mt-0.5 text-xs text-cream-200/70">{sales.current.orders} order baru bulan ini</dd>
+            </div>
+          </dl>
+          {monthTarget > 0 && (
+            <div className="mt-5">
+              <div className="flex justify-between text-xs text-cream-200/80">
+                <span>Target {formatCompactRupiah(monthTarget)}</span>
+                <span className="font-semibold text-cream-50">{Math.round((sales.current.revenue / monthTarget) * 100)}%</span>
+              </div>
+              <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-white/10">
+                <div className="h-full rounded-full bg-bronze-400" style={{ width: `${Math.min(100, (sales.current.revenue / monthTarget) * 100)}%` }} />
+              </div>
+            </div>
+          )}
         </section>
       )}
 

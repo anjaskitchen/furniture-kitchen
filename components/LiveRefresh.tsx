@@ -1,5 +1,5 @@
 "use client";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "./Toast";
@@ -95,6 +95,9 @@ const LEAD_TABLES: Record<string, string> = {
 export function AdminLive() {
   const router = useRouter();
   const toast = useToast();
+  const pathname = usePathname();
+  const path = useRef(pathname);
+  path.current = pathname;
 
   useEffect(() => {
     if (!configured) return;
@@ -113,6 +116,18 @@ export function AdminLive() {
           router.refresh();
         });
       }
+      // Order/pembayaran diubah admin lain → segarkan daftar, laporan & dashboard.
+      // Halaman form order tidak di-refresh agar isian yang sedang diketik tidak hilang.
+      let t: ReturnType<typeof setTimeout> | undefined;
+      const refreshOrders = () => {
+        const p = path.current;
+        if (p === "/admin" || p === "/admin/orders" || p.startsWith("/admin/reports")) {
+          clearTimeout(t);
+          t = setTimeout(() => router.refresh(), 800);
+        }
+      };
+      channel.on("postgres_changes", { event: "*", schema: "public", table: "orders" }, refreshOrders);
+      channel.on("postgres_changes", { event: "*", schema: "public", table: "order_payments" }, refreshOrders);
       channel.subscribe();
     })();
 

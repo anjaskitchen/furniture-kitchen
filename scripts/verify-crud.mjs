@@ -122,6 +122,49 @@ try {
   const { error: pe } = await admin.from("users").update({ role: "admin" }).eq("id", userId);
   check(Boolean(pe), "Editor tidak bisa menaikkan role sendiri");
 
+  // --- penjualan: order, item, pembayaran, laporan ---------------------------
+  {
+    const day = "2026-01-15";
+    const { data: oid, error: oe } = await admin.rpc("save_order", {
+      p: {
+        order_date: day,
+        customer_name: `Uji ${tag}`,
+        title: "Order uji",
+        category: `Kategori ${tag}`,
+        source: "website",
+        status: "production",
+        discount: 100000,
+        additional_fee: 50000,
+        cost_estimate: 3000000,
+        items: [
+          { name: "Item A", qty: 2.5, unit: "meter", unit_price: 1200000 },
+          { name: "Item B", qty: 1, unit: "unit", unit_price: 800000 },
+        ],
+        payments: [{ paid_at: day, amount: 1500000, method: "transfer", kind: "dp" }],
+      },
+    });
+    check(!oe && oid, "orders: simpan via save_order (editor)", oe?.message);
+    if (oid) {
+      cleanup.push(["orders", oid]);
+      const { data: o } = await admin.from("orders_view").select("order_number,subtotal,total,paid_amount,balance,payment_status,gross_profit").eq("id", oid).single();
+      // 2.5×1.2jt + 0.8jt = 3.8jt; total = 3.8jt − 0.1jt + 0.05jt = 3.75jt
+      check(Number(o.subtotal) === 3800000 && Number(o.total) === 3750000, `orders: total otomatis akurat (${o.total})`);
+      check(Number(o.balance) === 2250000 && o.payment_status === "partial", "orders: sisa tagihan & status bayar");
+      check(Number(o.gross_profit) === 750000, "orders: laba kotor = total − HPP");
+      check(/^ORD-2601-\d{4}$/.test(o.order_number), `orders: nomor order otomatis (${o.order_number})`);
+      const { data: r, error: re2 } = await admin.rpc("order_report", { p_from: day, p_to: day });
+      const cat = r?.by_category?.find((c) => c.label === `Kategori ${tag}`);
+      check(!re2 && cat && Number(cat.revenue) === 3750000, "orders: laporan menghitung omset order", re2?.message);
+      const { data: anonOrders } = await anon.from("orders").select("id").limit(1);
+      const { error: anonRpc } = await anon.rpc("order_report", { p_from: day, p_to: day });
+      check(!anonOrders?.length && Boolean(anonRpc), "orders: data penjualan tertutup untuk publik");
+      const { error: de2 } = await admin.from("orders").delete().eq("id", oid);
+      const { data: items } = await service.from("order_items").select("id").eq("order_id", oid);
+      check(!de2 && items?.length === 0, "orders: hapus order ikut menghapus item", de2?.message);
+      if (!de2) cleanup.pop();
+    }
+  }
+
   // --- storage ----------------------------------------------------------------
   const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", "base64");
   const path = `verify/${tag}.png`;
