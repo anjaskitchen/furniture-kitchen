@@ -33,7 +33,7 @@ export function createPublicClient() {
  * dari form publik (setelah validasi) dan manajemen admin user.
  */
 export function createAdminClient() {
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
   if (!publicEnv.supabaseUrl || !key) return null;
   return createSupabaseClient(publicEnv.supabaseUrl, key, {
     auth: { persistSession: false, autoRefreshToken: false },

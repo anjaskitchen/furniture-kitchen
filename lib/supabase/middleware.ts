@@ -4,8 +4,8 @@ import { NextResponse, type NextRequest } from "next/server";
 /** Refresh sesi Supabase dan lindungi route /admin. */
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim().replace(/\/$/, "");
+  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
   const path = request.nextUrl.pathname;
   const isAdminArea = path.startsWith("/admin") && !path.startsWith("/admin/login");
 
