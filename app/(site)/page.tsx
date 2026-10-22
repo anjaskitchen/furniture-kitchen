@@ -1,4 +1,4 @@
-import { ArrowRight, Calculator, PencilRuler } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Calculator, PencilRuler } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { CtaBand } from "@/components/CtaBand";
@@ -54,6 +54,33 @@ function heading(s: HomeSection) {
     title: s.title || DEFAULTS[s.key].title,
     description: s.description ?? undefined,
   };
+}
+
+/**
+ * Ukuran kartu grid bento portfolio agar baris selalu penuh berapa pun jumlah item:
+ * item pertama 2x2, sisanya mengisi kolom (sm: 2 kolom, lg: 4 kolom).
+ */
+function bentoSpan(i: number, n: number) {
+  if (n === 1) return "sm:col-span-2 lg:col-span-4";
+  if (i === 0) return "sm:col-span-2 sm:row-span-2";
+  const classes: string[] = [];
+  // sm (2 kolom): jika sisa item ganjil, item terakhir selebar baris.
+  if ((n - 1) % 2 === 1 && i === n - 1) classes.push("sm:col-span-2");
+  // lg (4 kolom): item 1-4 mengisi 2x2 di samping item besar, lalu baris berisi 4.
+  let lg = "lg:col-span-1";
+  if (n === 2) lg = "lg:col-span-2 lg:row-span-2";
+  else if (n === 3) lg = "lg:col-span-2";
+  else if (n === 4 && i === 3) lg = "lg:col-span-2";
+  else if (i >= 5) {
+    const extra = n - 5;
+    const pos = (i - 5) % 4;
+    const inRow = Math.min(4, extra - (i - 5 - pos));
+    if (inRow === 1) lg = "lg:col-span-4";
+    else if (inRow === 2) lg = "lg:col-span-2";
+    else if (inRow === 3 && pos === 2) lg = "lg:col-span-2";
+  }
+  classes.push(lg);
+  return classes.join(" ");
 }
 
 function SectionLink({ s, fallback }: { s: HomeSection; fallback?: string }) {
@@ -193,20 +220,31 @@ export default async function HomePage() {
           <Reveal>
             <SectionHeading {...heading(s)} action={<SectionLink s={s} fallback="/portfolio" />} />
           </Reveal>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {/* Bento: project pertama tampil besar di desktop */}
+          <div className="grid auto-rows-[220px] grid-cols-1 gap-4 sm:auto-rows-[240px] sm:grid-cols-2 lg:grid-cols-4">
             {items.map((p, i) => (
-              <Reveal key={p.id} delay={i * 60}>
-                <Link href={`/portfolio#${p.slug}`} className="group relative block overflow-hidden rounded-2xl">
-                  <div className="relative aspect-[4/3]">
-                    <SmartImage src={p.images[0]} alt={p.title} fill sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw" className="object-cover transition duration-700 group-hover:scale-105" />
-                  </div>
-                  <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-charcoal-950/80 to-transparent p-5 text-white opacity-100 transition sm:opacity-0 sm:group-hover:opacity-100">
-                    <p className="text-xs text-bronze-300">
-                      {p.category}
-                      {p.year ? ` · ${p.year}` : ""}
-                    </p>
-                    <h3 className="font-display text-lg font-semibold">{p.title}</h3>
-                    {p.location && <p className="text-xs text-white/70">{p.location}</p>}
+              <Reveal key={p.id} delay={i * 60} className={bentoSpan(i, items.length)}>
+                <Link href={`/portfolio#${p.slug}`} className="group relative block h-full overflow-hidden rounded-2xl">
+                  <SmartImage
+                    src={p.images[0]}
+                    alt={p.title}
+                    fill
+                    sizes={i === 0 ? "(min-width: 1024px) 50vw, 100vw" : "(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"}
+                    className="object-cover transition duration-700 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-charcoal-950/80 via-charcoal-950/10 to-transparent" />
+                  <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 p-5 text-white">
+                    <div className="min-w-0">
+                      <p className="text-xs text-bronze-300">
+                        {p.category}
+                        {p.year ? ` · ${p.year}` : ""}
+                      </p>
+                      <h3 className={cn("font-display font-semibold leading-snug", i === 0 ? "text-xl sm:text-2xl" : "text-base")}>{p.title}</h3>
+                      {p.location && <p className="mt-0.5 truncate text-xs text-white/70">{p.location}</p>}
+                    </div>
+                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/15 backdrop-blur transition group-hover:bg-white group-hover:text-charcoal-900">
+                      <ArrowUpRight className="h-4 w-4" />
+                    </span>
                   </div>
                 </Link>
               </Reveal>
@@ -306,7 +344,12 @@ export default async function HomePage() {
 
   return (
     <>
-      <Hero settings={settings} stats={heroStats} rating={{ value: reviews.rating, count: reviews.totalReviews }} />
+      <Hero
+        settings={settings}
+        stats={heroStats}
+        rating={{ value: reviews.rating, count: reviews.totalReviews }}
+        accentImage={portfolio[0]?.images[0] ? { src: portfolio[0].images[0], alt: portfolio[0].title, href: `/portfolio#${portfolio[0].slug}` } : null}
+      />
       {visible.map(({ s, node }, i) =>
         i % 2 === 0 ? (
           <section key={s.id} id={s.key} className={cn("container section", i === 0 && "!pt-8")} aria-label={heading(s).title}>

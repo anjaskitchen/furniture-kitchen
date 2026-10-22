@@ -1,6 +1,7 @@
 import { AnnouncementBar } from "@/components/AnnouncementBar";
 import { Footer } from "@/components/Footer";
 import { JsonLd } from "@/components/JsonLd";
+import { SiteLive } from "@/components/LiveRefresh";
 import { Navbar } from "@/components/Navbar";
 import { InstallPrompt } from "@/components/Pwa";
 import { MobileCTA, WhatsAppButton } from "@/components/WhatsAppButton";
@@ -23,6 +24,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
       <Footer settings={settings} />
       <WhatsAppButton number={settings.whatsapp_number} message={waMessage} />
       <MobileCTA number={settings.whatsapp_number} message={waMessage} />
+      <SiteLive />
       <InstallPrompt businessName={settings.business_name} logoUrl={settings.logo_url} />
       <JsonLd data={localBusinessJsonLd(settings)} />
     </>

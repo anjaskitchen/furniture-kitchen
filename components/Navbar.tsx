@@ -51,18 +51,19 @@ export function Navbar({
       <nav className="container flex h-16 items-center justify-between gap-4 lg:h-20" aria-label="Navigasi utama">
         <Logo name={businessName} logoUrl={logoUrl} />
 
-        <ul className="hidden items-center gap-5 xl:flex">
+        <ul className="hidden items-center gap-1 lg:flex">
           {NAV_ITEMS.map((item) => (
-            <li key={item.href}>
+            <li key={item.href} className={cn("wide" in item && item.wide && "hidden xl:block")}>
               <Link
                 href={item.href}
                 className={cn(
-                  "relative text-sm font-medium transition hover:text-wood-600 dark:hover:text-bronze-300",
+                  "relative rounded-full px-3 py-2 text-sm font-medium transition hover:text-wood-600 dark:hover:text-bronze-300",
                   isActive(item.href) ? "text-wood-600 dark:text-bronze-300" : "text-charcoal-800 dark:text-cream-200",
                 )}
                 aria-current={isActive(item.href) ? "page" : undefined}
               >
-                {item.label.replace(" Harga", "")}
+                {item.label.replace(" Harga", "").replace(" Kami", "")}
+                {isActive(item.href) && <span className="absolute inset-x-3 -bottom-0.5 h-0.5 rounded-full bg-current" aria-hidden />}
               </Link>
             </li>
           ))}
@@ -71,11 +72,12 @@ export function Navbar({
         <div className="flex items-center gap-1 sm:gap-2">
           <ThemeToggle />
           <Link href="/kalkulator" className="btn-primary btn-sm hidden sm:inline-flex">
-            <Calculator className="h-4 w-4" /> Hitung Estimasi Harga
+            <Calculator className="h-4 w-4" /> <span className="lg:hidden xl:inline">Hitung Estimasi Harga</span>
+            <span className="hidden lg:inline xl:hidden">Hitung Harga</span>
           </Link>
           <button
             type="button"
-            className="rounded-full p-2 transition hover:bg-charcoal-900/5 dark:hover:bg-white/10 xl:hidden"
+            className="rounded-full p-2 transition hover:bg-charcoal-900/5 dark:hover:bg-white/10 lg:hidden"
             onClick={() => setOpen((v) => !v)}
             aria-expanded={open}
             aria-controls="mobile-menu"
@@ -87,7 +89,7 @@ export function Navbar({
       </nav>
 
       {open && (
-        <div id="mobile-menu" className="absolute inset-x-0 top-full z-40 h-[100dvh] animate-fade-in overflow-y-auto bg-cream-50 pb-24 dark:bg-charcoal-950 xl:hidden">
+        <div id="mobile-menu" className="absolute inset-x-0 top-full z-40 h-[100dvh] animate-fade-in overflow-y-auto bg-cream-50 pb-24 dark:bg-charcoal-950 lg:hidden">
           <ul className="container flex flex-col py-6">
             {NAV_ITEMS.map((item) => (
               <li key={item.href}>

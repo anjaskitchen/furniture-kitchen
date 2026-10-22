@@ -78,7 +78,7 @@ types/                     Tipe TypeScript domain
 hooks/                     (cadangan untuk custom hooks)
 styles/globals.css         Tailwind + design tokens
 public/placeholders/       Ilustrasi placeholder SVG (ganti dengan foto asli via Admin)
-public/icons/, public/sw.js  Ikon PWA (npm run icons) & service worker
+public/icons/, pwa/        Ikon PWA (npm run icons) & template service worker (disajikan di /sw.js)
 supabase/migrations/       Migrasi SQL berurutan (tabel, relasi, trigger, RLS, storage, grant)
 supabase/seed.sql          Data awal (generated: npm run seed:sql), dijalankan sekali
 scripts/db.mjs             Runner migrasi otomatis (db:migrate / db:seed / db:setup / db:status)
@@ -224,6 +224,11 @@ Jika username/email sudah terdaftar, password, nama, dan role-nya diperbarui. Pe
 
 Username: 3–30 karakter, huruf kecil, angka, titik, garis bawah, atau strip (tidak membedakan huruf besar/kecil saat login). Akun tanpa email memakai alamat internal `<username>@akun.internal` yang tidak ditampilkan. Pesan gagal login selalu sama ("Username/email atau password salah") agar username tidak bisa ditebak, dan login dibatasi 8 percobaan per 15 menit per IP.
 
+### Tampilan admin
+- Sidebar dikelompokkan (Utama, Katalog, Harga & Material, Leads & Review, Sistem) dan bisa **dilipat menjadi ikon** (tombol di sidebar atau **Ctrl/⌘ + B**); pilihan tersimpan per perangkat.
+- Di HP: menu drawer dari kiri, tabel berubah menjadi kartu (ketuk kartu untuk edit).
+- Dashboard: aksi cepat, daftar "perlu tindakan" (lead baru/submission pending), grafik leads, leads terbaru, produk terpopuler, dan checklist **Kesiapan website** (foto asli, logo, WhatsApp, Place ID, dll.).
+
 ## 6b. Mengatur landing page (CMS)
 
 Semua tampilan homepage bisa diubah tanpa coding. Halaman di-revalidate otomatis saat disimpan, jadi perubahan langsung tampil.
@@ -309,6 +314,8 @@ Notifikasi dikirim untuk: form email/inquiry, request survey, dan customer submi
 5. Supabase → **Authentication → URL Configuration** → *Site URL* = domain Anda.
 6. Daftarkan `https://domain-anda.com/sitemap.xml` di Google Search Console, dan lengkapi Google Business Profile.
 
+Region fungsi server diset ke **Singapore (`sin1`)** lewat `vercel.json` agar dekat dengan database Supabase (Singapore) — setiap query jauh lebih cepat dibanding region default AS.
+
 Netlify / hosting Node lain juga bisa (`npm run build` + `npm start`, Node 20.12+).
 
 ## 12. Keamanan, SEO, performa
@@ -332,9 +339,14 @@ Netlify / hosting Node lain juga bisa (`npm run build` + `npm start`, Node 20.12
 ## 13. PWA
 
 - `app/manifest.ts` → `/manifest.webmanifest`: nama & deskripsi dari Pengaturan Website, ikon 192/512 + maskable, shortcut Kalkulator/Katalog/Kontak.
-- `public/sw.js` — service worker (aktif di production). Halaman *network-first* (konten admin selalu terbaru saat online, halaman yang pernah dibuka tetap bisa dilihat offline), aset `/_next/static` *cache-first*, gambar & font *stale-while-revalidate*. `/admin`, `/api`, dan domain lain (Supabase, YouTube) tidak pernah di-cache. Fallback offline: `/offline`.
+- `app/sw.js/route.ts` (sumber: `pwa/sw.template.js`) — service worker (aktif di production). Versinya otomatis mengikuti commit Git setiap deploy, sehingga HP/PC yang sudah meng-install aplikasi mendeteksi versi baru (dicek saat aplikasi dibuka & tiap 15 menit) dan menampilkan bar **"Versi terbaru website tersedia → Muat ulang"**. Halaman *network-first* (konten admin selalu terbaru saat online, halaman yang pernah dibuka tetap bisa dilihat offline), aset `/_next/static` *cache-first*, gambar & font *stale-while-revalidate*. `/admin`, `/api`, dan domain lain (Supabase, YouTube) tidak pernah di-cache. Fallback offline: `/offline`.
 - Kartu "Install aplikasi" muncul otomatis di browser yang mendukung (Chrome/Edge/Android). Jika ditolak, kartu tidak muncul lagi selama 30 hari. Di iPhone: Safari → Share → *Add to Home Screen*.
-- Mengganti logo PWA: ganti `app/icon.svg`, jalankan `npm run icons`, lalu naikkan `VERSION` di `public/sw.js`.
+- Mengganti logo PWA: ganti `app/icon.svg`, jalankan `npm run icons`, lalu deploy.
+
+### Realtime
+- **Website:** saat admin menyimpan konten (produk, harga, section homepage, FAQ, pengaturan, dll.), halaman yang sedang dibuka pengunjung ikut diperbarui otomatis dalam ±2 detik tanpa reload (Supabase Realtime + refresh data server). Koneksi hanya aktif saat tab terlihat.
+- **Admin:** lead baru (request survey, pesan kontak, customer submission) memunculkan notifikasi dan memperbarui badge menu secara langsung.
+- Diaktifkan oleh migrasi `20261022000400_realtime.sql`; RLS tetap berlaku (pengunjung tidak menerima data lead).
 
 ## 14. Uji end-to-end
 

@@ -3,9 +3,10 @@
  * - /_next/static: cache-first (file ber-hash, immutable).
  * - Gambar & font: stale-while-revalidate dengan batas jumlah.
  * - /admin, /api, request RSC, dan domain lain (Supabase, YouTube) tidak pernah di-cache.
- * Naikkan VERSION untuk membuang cache lama.
+ * VERSION diisi otomatis per deploy (commit Git) oleh app/sw.js/route.ts, sehingga
+ * browser mendeteksi versi baru dan cache lama dibuang.
  */
-const VERSION = "v1";
+const VERSION = "__SW_VERSION__";
 const STATIC_CACHE = `static-${VERSION}`;
 const PAGE_CACHE = `pages-${VERSION}`;
 const ASSET_CACHE = `assets-${VERSION}`;

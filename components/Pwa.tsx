@@ -1,18 +1,59 @@
 "use client";
-import { Download, X } from "lucide-react";
+import { Download, RefreshCw, X } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Logo } from "./Logo";
 
-/** Daftarkan service worker (production saja, agar hot reload dev tidak terganggu). */
+/**
+ * Daftarkan service worker (production saja) dan cek versi baru secara berkala.
+ * Saat deploy baru aktif, tampilkan bar "Versi terbaru tersedia" dengan tombol muat ulang.
+ */
 export function ServiceWorkerRegister() {
+  const [updated, setUpdated] = useState(false);
+
   useEffect(() => {
     if (process.env.NODE_ENV !== "production" || !("serviceWorker" in navigator)) return;
-    const register = () => navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(() => {});
+    let registration: ServiceWorkerRegistration | undefined;
+    // Kunjungan pertama (belum ada controller) tidak perlu notifikasi.
+    const hadController = Boolean(navigator.serviceWorker.controller);
+
+    const check = () => registration?.update().catch(() => {});
+    const onVisible = () => document.visibilityState === "visible" && check();
+    const onControllerChange = () => hadController && setUpdated(true);
+
+    const register = () =>
+      navigator.serviceWorker
+        .register("/sw.js", { scope: "/", updateViaCache: "none" })
+        .then((reg) => {
+          registration = reg;
+        })
+        .catch(() => {});
+
     if (document.readyState === "complete") register();
     else window.addEventListener("load", register, { once: true });
+    navigator.serviceWorker.addEventListener("controllerchange", onControllerChange);
+    document.addEventListener("visibilitychange", onVisible);
+    const interval = setInterval(check, 15 * 60_000);
+    return () => {
+      navigator.serviceWorker.removeEventListener("controllerchange", onControllerChange);
+      document.removeEventListener("visibilitychange", onVisible);
+      clearInterval(interval);
+    };
   }, []);
-  return null;
+
+  if (!updated) return null;
+  return (
+    <div role="status" className="fixed inset-x-3 top-3 z-[90] mx-auto flex max-w-md animate-fade-up items-center gap-3 rounded-2xl bg-charcoal-900 p-3 pl-4 text-sm text-cream-50 shadow-soft">
+      <RefreshCw className="h-4 w-4 shrink-0 text-bronze-300" aria-hidden />
+      <span className="flex-1">Versi terbaru website tersedia.</span>
+      <button type="button" onClick={() => window.location.reload()} className="rounded-full bg-cream-50 px-4 py-1.5 text-xs font-semibold text-charcoal-900 hover:bg-bronze-300">
+        Muat ulang
+      </button>
+      <button type="button" onClick={() => setUpdated(false)} className="rounded-full p-1.5 text-cream-200/70 hover:bg-white/10" aria-label="Tutup">
+        <X className="h-4 w-4" />
+      </button>
+    </div>
+  );
 }
 
 interface BeforeInstallPromptEvent extends Event {

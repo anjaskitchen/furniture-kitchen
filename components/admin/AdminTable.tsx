@@ -63,46 +63,83 @@ export function AdminTable({
   extra?: (row: Row) => ReactNode;
 }) {
   if (!rows.length) return <EmptyState title="Belum ada data" description="Data yang ditambahkan akan muncul di sini." />;
+  const imageCol = columns.find((c) => c.type === "image" || c.type === "color");
+  const [primary, ...rest] = columns.filter((c) => c !== imageCol);
+  const actions = (row: Row) => (
+    <>
+      {extra?.(row)}
+      {onEdit && (
+        <button onClick={() => onEdit(row)} className="rounded-lg p-2 text-charcoal-700 transition hover:bg-cream-200" aria-label="Edit">
+          <Pencil className="h-4 w-4" />
+        </button>
+      )}
+      {onDelete && (
+        <button onClick={() => onDelete(row)} className="rounded-lg p-2 text-red-600 transition hover:bg-red-50" aria-label="Hapus">
+          <Trash2 className="h-4 w-4" />
+        </button>
+      )}
+    </>
+  );
   return (
-    <div className="overflow-x-auto rounded-2xl bg-white ring-1 ring-charcoal-900/5">
-      <table className="w-full min-w-[640px] text-left text-sm">
-        <thead className="border-b border-charcoal-900/5 bg-cream-50 text-xs uppercase tracking-wider text-charcoal-700">
-          <tr>
-            {columns.map((c) => (
-              <th key={c.name} scope="col" className="px-4 py-3 font-semibold">
-                {c.label}
-              </th>
-            ))}
-            <th className="px-4 py-3 text-right font-semibold">Aksi</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-charcoal-900/5">
-          {rows.map((row) => (
-            <tr key={row.id} className="transition hover:bg-cream-50/60">
+    <>
+      {/* Mobile: kartu */}
+      <ul className="space-y-3 md:hidden">
+        {rows.map((row) => (
+          <li key={row.id} className="rounded-2xl bg-white p-4 ring-1 ring-charcoal-900/5">
+            <div className="flex items-start gap-3" onClick={() => onEdit?.(row)} role={onEdit ? "button" : undefined}>
+              {imageCol && <Cell col={imageCol} row={row} />}
+              <div className="min-w-0 flex-1">
+                {primary && (
+                  <p className="font-semibold leading-snug">
+                    <Cell col={{ ...primary, type: primary.type === "badge" ? "text" : primary.type }} row={row} />
+                  </p>
+                )}
+                <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
+                  {rest.map((c) => (
+                    <div key={c.name} className="min-w-0">
+                      <dt className="text-charcoal-700/60">{c.label}</dt>
+                      <dd className="truncate text-charcoal-900">
+                        <Cell col={c} row={row} />
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
+            </div>
+            <div className="mt-3 flex items-center justify-end gap-1 border-t border-charcoal-900/5 pt-2">{actions(row)}</div>
+          </li>
+        ))}
+      </ul>
+
+      {/* Tablet & desktop: tabel */}
+      <div className="hidden overflow-x-auto rounded-2xl bg-white ring-1 ring-charcoal-900/5 md:block">
+        <table className="w-full text-left text-sm">
+          <thead className="border-b border-charcoal-900/5 bg-cream-50 text-xs uppercase tracking-wider text-charcoal-700">
+            <tr>
               {columns.map((c) => (
-                <td key={c.name} className="px-4 py-3 align-middle">
-                  <Cell col={c} row={row} />
-                </td>
+                <th key={c.name} scope="col" className="px-4 py-3 font-semibold">
+                  {c.label}
+                </th>
               ))}
-              <td className="px-4 py-3">
-                <div className="flex items-center justify-end gap-1">
-                  {extra?.(row)}
-                  {onEdit && (
-                    <button onClick={() => onEdit(row)} className="rounded-lg p-2 text-charcoal-700 hover:bg-cream-200" aria-label="Edit">
-                      <Pencil className="h-4 w-4" />
-                    </button>
-                  )}
-                  {onDelete && (
-                    <button onClick={() => onDelete(row)} className="rounded-lg p-2 text-red-600 hover:bg-red-50" aria-label="Hapus">
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  )}
-                </div>
-              </td>
+              <th className="px-4 py-3 text-right font-semibold">Aksi</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody className="divide-y divide-charcoal-900/5">
+            {rows.map((row) => (
+              <tr key={row.id} className="transition hover:bg-cream-50/60">
+                {columns.map((c) => (
+                  <td key={c.name} className="px-4 py-3 align-middle">
+                    <Cell col={c} row={row} />
+                  </td>
+                ))}
+                <td className="px-4 py-3">
+                  <div className="flex items-center justify-end gap-1">{actions(row)}</div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
   );
 }
