@@ -94,6 +94,9 @@ function fail(e: unknown): ActionResult {
   if (e instanceof AuthError) return { ok: false, error: e.message };
   const msg = e instanceof Error ? e.message : String(e);
   console.error("[orders]", msg);
+  if (/foreign key constraint/i.test(msg)) {
+    return { ok: false, error: "Order ini sudah punya transaksi proyek (stok terpakai, biaya, atau pembelian). Ubah status menjadi Batal agar riwayat tetap aman." };
+  }
   return { ok: false, error: "Terjadi kesalahan: " + msg };
 }
 

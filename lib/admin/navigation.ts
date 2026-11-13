@@ -1,6 +1,16 @@
 import {
+  Banknote,
   BarChart3,
+  Boxes,
   CalendarCheck,
+  CalendarDays,
+  Hammer,
+  IdCard,
+  Landmark,
+  ListChecks,
+  PackageSearch,
+  ShoppingCart,
+  Store,
   Droplets,
   Image as ImageIcon,
   Inbox,
@@ -43,6 +53,29 @@ export const ADMIN_NAV: { title: string; items: AdminNavItem[] }[] = [
       { href: "/admin/orders", label: "Order", icon: Receipt },
       { href: "/admin/reports", label: "Laporan & KPI", icon: BarChart3 },
     ],
+  },
+  {
+    title: "Produksi & Material",
+    items: [
+      { href: "/admin/proyek", label: "Proyek & RAB", icon: Hammer },
+      { href: "/admin/pembelian", label: "Pembelian", icon: ShoppingCart },
+      { href: "/admin/stok", label: "Stok Barang", icon: Boxes },
+      { href: "/admin/bahan", label: "Bahan Baku", icon: PackageSearch },
+      { href: "/admin/suppliers", label: "Supplier", icon: Store },
+      { href: "/admin/template-material", label: "Template Material", icon: ListChecks },
+    ],
+  },
+  {
+    title: "SDM",
+    items: [
+      { href: "/admin/pegawai", label: "Pegawai", icon: IdCard },
+      { href: "/admin/absensi", label: "Absensi", icon: CalendarDays },
+      { href: "/admin/penggajian", label: "Penggajian", icon: Banknote, superAdmin: true },
+    ],
+  },
+  {
+    title: "Keuangan",
+    items: [{ href: "/admin/keuangan", label: "Keuangan & Kas", icon: Landmark, superAdmin: true }],
   },
   {
     title: "Katalog",

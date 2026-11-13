@@ -1,5 +1,5 @@
 "use client";
-import { ArrowLeft, FileText, Loader2, MessageCircle, Plus, Save, Trash2, Wallet } from "lucide-react";
+import { ArrowLeft, FileText, Hammer, Loader2, MessageCircle, Plus, Save, Trash2, Wallet } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useTransition } from "react";
@@ -205,6 +205,11 @@ export function OrderForm({ initial, categories }: { initial: OrderFormValues; c
             <a href={whatsappLink(phone, `Halo ${v.customer_name}, terkait order ${v.order_number} (${v.title}).`)} target="_blank" rel="noopener noreferrer" className="btn-outline btn-sm bg-white !py-2.5">
               <MessageCircle className="h-4 w-4" /> WhatsApp
             </a>
+          )}
+          {!isNew && (
+            <Link href={`/admin/proyek/order/${v.id}`} className="btn-outline btn-sm bg-white !py-2.5">
+              <Hammer className="h-4 w-4" /> Proyek & RAB
+            </Link>
           )}
           {!isNew && (
             <Link href={`/admin/invoice/${v.id}`} target="_blank" className="btn-outline btn-sm bg-white !py-2.5">

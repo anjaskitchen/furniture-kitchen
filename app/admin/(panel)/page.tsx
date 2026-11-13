@@ -13,6 +13,8 @@ import {
   Wallet,
 } from "lucide-react";
 import Link from "next/link";
+import { Suspense } from "react";
+import { ErpDashboard } from "@/components/admin/erp/ErpDashboard";
 import { Delta } from "@/components/admin/orders/ui";
 import { accountLabel } from "@/lib/admin/accounts";
 import { requireAdminPage } from "@/lib/admin/auth";
@@ -196,6 +198,10 @@ export default async function Dashboard() {
           ))}
         </section>
       )}
+
+      <Suspense fallback={<div className="mb-8 h-64 animate-pulse rounded-2xl bg-white/60" />}>
+        <ErpDashboard isOwner={user.role === "admin"} />
+      </Suspense>
 
       {sales && (
         <section aria-label="Penjualan bulan ini" className="mb-6 rounded-2xl bg-charcoal-900 p-5 text-cream-50 sm:p-6">

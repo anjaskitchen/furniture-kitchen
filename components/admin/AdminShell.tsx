@@ -33,7 +33,7 @@ function Brand({ name, collapsed }: { name: string; collapsed: boolean }) {
 function NavList({ pathname, collapsed, badges, role, onNavigate }: { pathname: string; collapsed: boolean; badges: Record<string, number>; role: string; onNavigate?: () => void }) {
   return (
     <nav aria-label="Menu admin" className="flex-1 overflow-y-auto overscroll-contain px-3 pb-4 [scrollbar-width:thin]">
-      {ADMIN_NAV.map((group) => (
+      {ADMIN_NAV.filter((group) => group.items.some((item) => !item.superAdmin || role === "admin")).map((group) => (
         <div key={group.title} className="mt-5 first:mt-2">
           {collapsed ? (
             <div className="mx-auto mb-2 h-px w-6 bg-white/10" aria-hidden />

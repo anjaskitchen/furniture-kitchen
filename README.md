@@ -18,6 +18,7 @@ Website company profile + katalog + **kalkulator harga dinamis** + **CMS landing
 6. [Cara membuat admin](#6-cara-membuat-admin)
    - [Mengatur landing page (CMS)](#6b-mengatur-landing-page-cms)
    - [Order, omset & laporan KPI](#6c-order-omset--laporan-kpi)
+   - [Sistem manajemen perusahaan (ERP)](#6d-sistem-manajemen-perusahaan-erp)
 7. [Cara mengubah harga](#7-cara-mengubah-harga)
 8. [Cara upload katalog](#8-cara-upload-katalog)
 9. [Cara mengatur Google Review](#9-cara-mengatur-google-review)
@@ -261,6 +262,29 @@ Menu **Penjualan** di admin:
 **Definisi angka (konsisten di layar & Excel):** Omset = total order berstatus Deal/Produksi/Instalasi/Selesai berdasarkan tanggal order (Penawaran & Batal tidak dihitung) · Kas masuk = pembayaran berdasarkan tanggal bayar · Piutang = total − dibayar order terkonfirmasi per hari ini · Laba kotor = omset − HPP · Semua tanggal WIB. Perhitungan dilakukan di database (`order_report`, trigger total) dan diuji di `npm test` & `npm run verify`.
 
 Data penjualan hanya bisa diakses admin/editor (RLS); perubahan order tersinkron realtime antar admin.
+
+## 6d. Sistem manajemen perusahaan (ERP)
+
+Migrasi `supabase/migrations/20261114*_erp_*.sql`. Semua modul saling terhubung — data konsumen tidak diinput ulang.
+
+**Alur:** Order disimpan → **proyek** dibuat otomatis (+ 9 tahapan default) → isi ukuran proyek & *Hitung dari template* → **RAB** kebutuhan material (cek stok gudang, PO berjalan, kekurangan, supplier termurah) → *Buat permintaan pembelian* → **PO** ke supplier → *Terima barang* = stok masuk (1 lot per barang, ongkir/diskon dibagi ke harga pokok) & otomatis **dialokasikan** ke proyek → **pemakaian** dicatat (dipakai / rusak / sisa kembali) → pegawai ditugaskan & **absensi** memilih proyek → **slip gaji** dari absensi + potongan + cicilan kasbon → realisasi biaya & laba proyek → **dashboard keuangan**.
+
+| Menu | Isi | Akses |
+|---|---|---|
+| Proyek & RAB | Daftar proyek + indikator hijau/kuning/merah; detail: ringkasan, RAB & material (alokasi, pemakaian), anggaran vs realisasi + biaya langsung, jadwal & progres (foto), pekerja & upah | admin/editor (angka uang: admin utama) |
+| Pembelian | PO draft → dipesan → diterima, kirim ke supplier via WhatsApp, pembayaran & utang supplier | admin/editor (pembayaran: admin utama) |
+| Stok Barang | Ringkasan per bahan (fisik / dialokasikan / tersedia), lot stok + status, riwayat mutasi (tanggal, pengguna, alasan, referensi), stok masuk manual, penyesuaian / rusak / retur | admin/editor |
+| Bahan Baku | Database bahan + spesifikasi dinamis per kategori, perbandingan harga antar supplier, riwayat harga | admin/editor |
+| Supplier | Profil toko, daftar barang & harga, tombol WhatsApp; supplier bertransaksi diarsipkan (tidak dihapus) | admin/editor |
+| Template Material | Formula kebutuhan per jenis pekerjaan (`panjang`, `tinggi`, `kedalaman`, `kabinet_atas`, `kabinet_bawah`, `laci`, `pintu`, `ceil/max/min/round`) | admin/editor |
+| Pegawai | Identitas, jabatan dinamis, kontak darurat; foto & KTP di bucket privat `hr-private` (signed URL), pengaturan gaji, riwayat | admin/editor (gaji & dokumen: admin utama) |
+| Absensi | Input harian (hadir/izin/sakit/libur/tidak hadir, ½ hari, lembur, proyek) + rekap bulanan; koreksi tercatat di audit log | admin/editor |
+| Penggajian | Hitung gaji otomatis, potongan opsional, kasbon (piutang pegawai, dicicil lewat slip), setujui → bayar (kas keluar), slip A4 cetak / PDF | admin utama |
+| Keuangan & Kas | Dashboard (omzet, DP, pelunasan, pembelian, upah, operasional, laba kotor & operasional, saldo kas, piutang, utang), alokasi dana, buku kas, akun kas, transfer, pengaturan % anggaran, export Excel | admin utama |
+
+**Prinsip data:** uang `numeric(14,2)`; UUID; soft delete untuk data penting; RLS per peran; **audit log** untuk transaksi; stok & kas diubah hanya lewat fungsi database dalam satu transaksi (`receive_purchase_order`, `record_usage`, `allocate_stock`, `stock_adjust`, `generate_payroll`, `set_payroll_status`). Buku kas (`financial_transactions`) diisi otomatis oleh trigger dari pembayaran order, pembayaran supplier, biaya proyek, kasbon, dan gaji — unik per sumber sehingga tidak tercatat dua kali. PO tidak bisa diterima dua kali, stok tidak bisa minus/kurang dari yang dialokasikan, slip yang sudah dibayar & absensinya terkunci.
+
+**Rumus:** Laba kotor proyek = nilai kontrak − biaya langsung (material terpakai + upah + transport/pemasangan/biaya langsung lain) · Laba operasional = laba kotor − overhead (pengeluaran tanpa proyek) − gaji yang tidak terbebankan ke proyek · Gaji kotor = hari kerja × upah harian (atau gaji bulanan / upah borongan) · Gaji bersih = gaji kotor + insentif + tunjangan − potongan.
 
 ## 7. Cara mengubah harga
 
