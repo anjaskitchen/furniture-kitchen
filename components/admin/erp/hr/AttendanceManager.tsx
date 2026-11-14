@@ -71,7 +71,7 @@ export function AttendanceDaily({ date, employees, records, projects, isOwner }:
           <IconButton label="Hari sebelumnya" onClick={() => router.push(`/admin/absensi?date=${addDays(date, -1)}`)}>
             <ChevronLeft className="h-5 w-5" />
           </IconButton>
-          <input type="date" className="input !w-auto !py-2" value={date} onChange={(e) => e.target.value && router.push(`/admin/absensi?date=${e.target.value}`)} />
+          <input type="date" min="1900-01-01" max="2100-12-31" className="input !w-auto !py-2" value={date} onChange={(e) => e.target.value && router.push(`/admin/absensi?date=${e.target.value}`)} />
           <IconButton label="Hari berikutnya" onClick={() => router.push(`/admin/absensi?date=${addDays(date, 1)}`)}>
             <ChevronRight className="h-5 w-5" />
           </IconButton>

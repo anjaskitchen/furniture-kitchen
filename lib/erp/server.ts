@@ -90,12 +90,19 @@ export const zOptText = (max = 500) =>
     .optional()
     .nullable()
     .transform((v) => v || null);
-export const zDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Tanggal tidak valid");
+/** Tanggal YYYY-MM-DD yang masuk akal (tahun 1900–2100); mencegah salah ketik seperti tahun 275760. */
+const validDate = (v: string) => {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return false;
+  const y = Number(v.slice(0, 4));
+  return y >= 1900 && y <= 2100 && !Number.isNaN(Date.parse(`${v}T00:00:00Z`));
+};
+const DATE_MSG = "Tanggal tidak valid — periksa tahunnya (format hari/bulan/tahun 4 digit)";
+export const zDate = z.string({ message: "Tanggal wajib diisi" }).refine(validDate, DATE_MSG);
 export const zOptDate = z
   .string()
   .optional()
   .nullable()
-  .refine((v) => !v || /^\d{4}-\d{2}-\d{2}$/.test(v), "Tanggal tidak valid")
+  .refine((v) => !v || validDate(v), DATE_MSG)
   .transform((v) => v || null);
 export const zMoney = (label: string) =>
   z.coerce

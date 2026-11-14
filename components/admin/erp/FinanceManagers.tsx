@@ -163,7 +163,7 @@ export function LedgerManager({ rows, accounts, projects }: { rows: LedgerRow[];
               </select>
             </Field>
             <Field label="Tanggal" required>
-              <input type="date" className="input" value={f.txn_date} onChange={(e) => setF({ ...f, txn_date: e.target.value })} />
+              <input type="date" min="1900-01-01" max="2100-12-31" className="input" value={f.txn_date} onChange={(e) => setF({ ...f, txn_date: e.target.value })} />
             </Field>
             <Field label="Jumlah" required error={errors.amount}>
               <MoneyInput value={f.amount} onChange={(n) => setF({ ...f, amount: n })} />
@@ -229,7 +229,7 @@ export function LedgerManager({ rows, accounts, projects }: { rows: LedgerRow[];
               <MoneyInput value={tr.amount} onChange={(n) => setTr({ ...tr, amount: n })} />
             </Field>
             <Field label="Tanggal" required>
-              <input type="date" className="input" value={tr.txn_date} onChange={(e) => setTr({ ...tr, txn_date: e.target.value })} />
+              <input type="date" min="1900-01-01" max="2100-12-31" className="input" value={tr.txn_date} onChange={(e) => setTr({ ...tr, txn_date: e.target.value })} />
             </Field>
             <Field label="Keterangan" className="sm:col-span-2">
               <input className="input" value={tr.description} onChange={(e) => setTr({ ...tr, description: e.target.value })} placeholder="mis. Setor tunai ke bank" />
@@ -316,7 +316,7 @@ export function AccountsManager({ accounts }: { accounts: CashAccount[] }) {
               <MoneyInput value={f.opening_balance} onChange={(n) => setF({ ...f, opening_balance: n })} />
             </Field>
             <Field label="Per tanggal">
-              <input type="date" className="input" value={f.opening_date} onChange={(e) => setF({ ...f, opening_date: e.target.value })} />
+              <input type="date" min="1900-01-01" max="2100-12-31" className="input" value={f.opening_date} onChange={(e) => setF({ ...f, opening_date: e.target.value })} />
             </Field>
             <div className="flex flex-col gap-2">
               <label className="flex items-center gap-2 text-sm">

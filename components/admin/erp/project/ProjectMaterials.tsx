@@ -495,7 +495,7 @@ export function ProjectMaterials({
               <QtyInput value={use.qty} onChange={(v) => setUse({ ...use, qty: v })} />
             </Field>
             <Field label="Tanggal" required>
-              <input type="date" className="input" value={use.date} onChange={(e) => setUse({ ...use, date: e.target.value })} />
+              <input type="date" min="1900-01-01" max="2100-12-31" className="input" value={use.date} onChange={(e) => setUse({ ...use, date: e.target.value })} />
             </Field>
             <Field label="Catatan" className="sm:col-span-2">
               <input className="input" value={use.notes} onChange={(e) => setUse({ ...use, notes: e.target.value })} placeholder={use.kind === "damaged" ? "Penyebab rusak / terbuang" : ""} />

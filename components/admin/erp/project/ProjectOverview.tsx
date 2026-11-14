@@ -239,16 +239,16 @@ export function ProjectInfoModal({
           </select>
         </Field>
         <Field label="Tanggal mulai pengerjaan" error={errors.start_date}>
-          <input type="date" className="input" value={f.start_date} onChange={(e) => setF({ ...f, start_date: e.target.value })} />
+          <input type="date" min="1900-01-01" max="2100-12-31" className="input" value={f.start_date} onChange={(e) => setF({ ...f, start_date: e.target.value })} />
         </Field>
         <Field label="Target selesai" error={errors.target_end_date}>
-          <input type="date" className="input" value={f.target_end_date} onChange={(e) => setF({ ...f, target_end_date: e.target.value })} />
+          <input type="date" min="1900-01-01" max="2100-12-31" className="input" value={f.target_end_date} onChange={(e) => setF({ ...f, target_end_date: e.target.value })} />
         </Field>
         <Field label="Estimasi durasi (hari)" hint="Kosongkan untuk dihitung dari tanggal mulai & target.">
           <input type="number" min={0} className="input" value={f.estimated_days} onChange={(e) => setF({ ...f, estimated_days: e.target.value })} />
         </Field>
         <Field label="Tanggal selesai aktual" hint="Otomatis terisi saat status order Selesai.">
-          <input type="date" className="input" value={f.actual_end_date} onChange={(e) => setF({ ...f, actual_end_date: e.target.value })} />
+          <input type="date" min="1900-01-01" max="2100-12-31" className="input" value={f.actual_end_date} onChange={(e) => setF({ ...f, actual_end_date: e.target.value })} />
         </Field>
         <div className="rounded-2xl bg-cream-100 p-4 sm:col-span-2">
           <p className="mb-3 text-sm font-semibold">Ukuran proyek (untuk perhitungan material)</p>

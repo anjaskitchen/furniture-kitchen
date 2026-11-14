@@ -71,7 +71,7 @@ export function EmployeeFormModal({ value, onClose, positions, onSaved }: { valu
         <Field label="Nama lengkap" required error={errors.full_name} className="sm:col-span-2">
           <input className="input" value={f.full_name} onChange={(e) => set("full_name", e.target.value)} autoFocus />
         </Field>
-        <Field label="Jenis kelamin">
+        <Field label="Jenis kelamin" error={errors.gender}>
           <select className="input" value={f.gender} onChange={(e) => set("gender", e.target.value)}>
             <option value="">—</option>
             <option value="L">Laki-laki</option>
@@ -90,16 +90,16 @@ export function EmployeeFormModal({ value, onClose, positions, onSaved }: { valu
               ))}
           </select>
         </Field>
-        <Field label="Tempat lahir (opsional)">
+        <Field label="Tempat lahir (opsional)" error={errors.birth_place}>
           <input className="input" value={f.birth_place} onChange={(e) => set("birth_place", e.target.value)} />
         </Field>
-        <Field label="Tanggal lahir (opsional)">
-          <input type="date" className="input" value={f.birth_date} onChange={(e) => set("birth_date", e.target.value)} />
+        <Field label="Tanggal lahir (opsional)" error={errors.birth_date}>
+          <input type="date" min="1900-01-01" max="2100-12-31" className="input" value={f.birth_date} onChange={(e) => set("birth_date", e.target.value)} />
         </Field>
         <Field label="Nomor HP pegawai" error={errors.phone}>
           <input className="input" inputMode="tel" value={f.phone} onChange={(e) => set("phone", e.target.value)} />
         </Field>
-        <Field label="Status pegawai" required>
+        <Field label="Status pegawai" required error={errors.status}>
           <select className="input" value={f.status} onChange={(e) => set("status", e.target.value)}>
             {EMPLOYEE_STATUSES.map((s) => (
               <option key={s.value} value={s.value}>
@@ -108,27 +108,27 @@ export function EmployeeFormModal({ value, onClose, positions, onSaved }: { valu
             ))}
           </select>
         </Field>
-        <Field label="Alamat lengkap" className="sm:col-span-2">
+        <Field label="Alamat lengkap" error={errors.address} className="sm:col-span-2">
           <textarea className="input" rows={2} value={f.address} onChange={(e) => set("address", e.target.value)} />
         </Field>
-        <Field label="Nama kerabat / kontak darurat">
+        <Field label="Nama kerabat / kontak darurat" error={errors.emergency_contact_name}>
           <input className="input" value={f.emergency_contact_name} onChange={(e) => set("emergency_contact_name", e.target.value)} />
         </Field>
-        <Field label="Hubungan">
+        <Field label="Hubungan" error={errors.emergency_contact_relation}>
           <input className="input" value={f.emergency_contact_relation} onChange={(e) => set("emergency_contact_relation", e.target.value)} placeholder="Istri, orang tua, saudara…" />
         </Field>
         <Field label="Nomor HP kerabat" error={errors.emergency_contact_phone}>
           <input className="input" inputMode="tel" value={f.emergency_contact_phone} onChange={(e) => set("emergency_contact_phone", e.target.value)} />
         </Field>
-        <Field label="Tanggal mulai bekerja">
-          <input type="date" className="input" value={f.start_date} onChange={(e) => set("start_date", e.target.value)} />
+        <Field label="Tanggal mulai bekerja" error={errors.start_date}>
+          <input type="date" min="1900-01-01" max="2100-12-31" className="input" value={f.start_date} onChange={(e) => set("start_date", e.target.value)} />
         </Field>
         {f.status !== "active" && (
-          <Field label="Tanggal berhenti">
-            <input type="date" className="input" value={f.end_date} onChange={(e) => set("end_date", e.target.value)} />
+          <Field label="Tanggal berhenti" error={errors.end_date}>
+            <input type="date" min="1900-01-01" max="2100-12-31" className="input" value={f.end_date} onChange={(e) => set("end_date", e.target.value)} />
           </Field>
         )}
-        <Field label="Catatan administrasi" className="sm:col-span-2">
+        <Field label="Catatan administrasi" error={errors.notes} className="sm:col-span-2">
           <textarea className="input" rows={2} value={f.notes} onChange={(e) => set("notes", e.target.value)} />
         </Field>
         <p className="text-xs text-charcoal-700/70 sm:col-span-2">Foto, KTP, dan pengaturan gaji diatur di halaman detail pegawai (khusus admin utama).</p>

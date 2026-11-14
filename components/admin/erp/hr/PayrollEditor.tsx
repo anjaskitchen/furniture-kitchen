@@ -201,7 +201,7 @@ export function PayrollEditor({ payroll: p, items, accounts }: { payroll: Payrol
               Gaji bersih <strong>{formatRupiah(p.net_amount)}</strong> akan dicatat sebagai kas keluar. Setelah dibayar, slip & absensi periode ini terkunci.
             </p>
             <Field label="Tanggal pembayaran" required>
-              <input type="date" className="input" value={pay.date} onChange={(e) => setPay({ ...pay, date: e.target.value })} />
+              <input type="date" min="1900-01-01" max="2100-12-31" className="input" value={pay.date} onChange={(e) => setPay({ ...pay, date: e.target.value })} />
             </Field>
             <Field label="Dibayar dari akun" required>
               <select className="input" value={pay.account_id} onChange={(e) => setPay({ ...pay, account_id: e.target.value })}>

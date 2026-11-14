@@ -116,10 +116,10 @@ export function ProjectWorkers({ p, workers, employees, showMoney }: { p: Projec
               <QtyInput value={f.estimated_days} onChange={(v) => setF({ ...f, estimated_days: v })} />
             </Field>
             <Field label="Mulai">
-              <input type="date" className="input" value={f.start_date} onChange={(e) => setF({ ...f, start_date: e.target.value })} />
+              <input type="date" min="1900-01-01" max="2100-12-31" className="input" value={f.start_date} onChange={(e) => setF({ ...f, start_date: e.target.value })} />
             </Field>
             <Field label="Selesai">
-              <input type="date" className="input" value={f.end_date} onChange={(e) => setF({ ...f, end_date: e.target.value })} />
+              <input type="date" min="1900-01-01" max="2100-12-31" className="input" value={f.end_date} onChange={(e) => setF({ ...f, end_date: e.target.value })} />
             </Field>
             {showMoney && (
               <Field label="Upah borongan proyek (opsional)" className="sm:col-span-2" hint="Isi hanya untuk pegawai sistem per proyek/borongan. Pegawai harian dihitung dari absensi × upah harian.">

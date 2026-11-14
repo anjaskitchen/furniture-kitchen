@@ -162,7 +162,7 @@ export function ProjectBudget({ p, budgets, expenses, accounts }: { p: ProjectRo
             className="grid gap-4 sm:grid-cols-2"
           >
             <Field label="Tanggal" required error={errors.expense_date}>
-              <input type="date" className="input" value={exp.expense_date} onChange={(e) => setExp({ ...exp, expense_date: e.target.value })} />
+              <input type="date" min="1900-01-01" max="2100-12-31" className="input" value={exp.expense_date} onChange={(e) => setExp({ ...exp, expense_date: e.target.value })} />
             </Field>
             <Field label="Kategori" required>
               <select className="input" value={exp.category} onChange={(e) => setExp({ ...exp, category: e.target.value })}>

@@ -112,10 +112,10 @@ export function PayrollSlips({ start, end, slips, employees, pay }: { start: str
             className="grid gap-4 sm:grid-cols-2"
           >
             <Field label="Periode mulai" required>
-              <input type="date" className="input" value={gen.start} onChange={(e) => setGen({ ...gen, start: e.target.value })} />
+              <input type="date" min="1900-01-01" max="2100-12-31" className="input" value={gen.start} onChange={(e) => setGen({ ...gen, start: e.target.value })} />
             </Field>
             <Field label="Periode akhir" required>
-              <input type="date" className="input" value={gen.end} onChange={(e) => setGen({ ...gen, end: e.target.value })} />
+              <input type="date" min="1900-01-01" max="2100-12-31" className="input" value={gen.end} onChange={(e) => setGen({ ...gen, end: e.target.value })} />
             </Field>
             <div className="sm:col-span-2">
               <div className="mb-2 flex items-center justify-between">
@@ -239,7 +239,7 @@ export function DeductionsAndLoans({ tab, deductions, loans, employees, accounts
                 </select>
               </Field>
               <Field label="Tanggal" required>
-                <input type="date" className="input" value={d.deduction_date} onChange={(e) => setD({ ...d, deduction_date: e.target.value })} />
+                <input type="date" min="1900-01-01" max="2100-12-31" className="input" value={d.deduction_date} onChange={(e) => setD({ ...d, deduction_date: e.target.value })} />
               </Field>
               <Field label="Nama potongan" required error={errors.name}>
                 <input className="input" value={d.name} onChange={(e) => setD({ ...d, name: e.target.value })} />
@@ -313,7 +313,7 @@ export function DeductionsAndLoans({ tab, deductions, loans, employees, accounts
               </select>
             </Field>
             <Field label="Tanggal" required>
-              <input type="date" className="input" value={l.loan_date} onChange={(e) => setL({ ...l, loan_date: e.target.value })} />
+              <input type="date" min="1900-01-01" max="2100-12-31" className="input" value={l.loan_date} onChange={(e) => setL({ ...l, loan_date: e.target.value })} />
             </Field>
             <Field label="Nominal" required error={errors.amount}>
               <MoneyInput value={l.amount} onChange={(n) => setL({ ...l, amount: n, installment_amount: l.installment_amount || n })} />

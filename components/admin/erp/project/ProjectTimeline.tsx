@@ -147,13 +147,13 @@ export function ProjectTimeline({ p, stages }: { p: ProjectRow; stages: Stage[] 
               <input type="range" min={0} max={100} step={5} value={f.progress} onChange={(e) => setF({ ...f, progress: Number(e.target.value) })} className="mt-3 w-full accent-[#4B5138]" />
             </Field>
             <Field label="Tanggal mulai">
-              <input type="date" className="input" value={f.start_date} onChange={(e) => setF({ ...f, start_date: e.target.value })} />
+              <input type="date" min="1900-01-01" max="2100-12-31" className="input" value={f.start_date} onChange={(e) => setF({ ...f, start_date: e.target.value })} />
             </Field>
             <Field label="Target selesai">
-              <input type="date" className="input" value={f.target_date} onChange={(e) => setF({ ...f, target_date: e.target.value })} />
+              <input type="date" min="1900-01-01" max="2100-12-31" className="input" value={f.target_date} onChange={(e) => setF({ ...f, target_date: e.target.value })} />
             </Field>
             <Field label="Tanggal selesai aktual">
-              <input type="date" className="input" value={f.actual_end_date} onChange={(e) => setF({ ...f, actual_end_date: e.target.value })} />
+              <input type="date" min="1900-01-01" max="2100-12-31" className="input" value={f.actual_end_date} onChange={(e) => setF({ ...f, actual_end_date: e.target.value })} />
             </Field>
             <Field label="Catatan pekerjaan" className="sm:col-span-2">
               <textarea className="input" rows={3} value={f.notes} onChange={(e) => setF({ ...f, notes: e.target.value })} />

@@ -187,16 +187,16 @@ export function PurchaseForm({
               </select>
             </Field>
             <Field label="Tanggal pembelian" required error={err("order_date")}>
-              <input type="date" className="input" value={v.order_date} disabled={locked} onChange={(e) => setV({ ...v, order_date: e.target.value })} />
+              <input type="date" min="1900-01-01" max="2100-12-31" className="input" value={v.order_date} disabled={locked} onChange={(e) => setV({ ...v, order_date: e.target.value })} />
             </Field>
             <Field label="Nomor nota supplier" error={err("invoice_number")}>
               <input className="input" value={v.invoice_number} disabled={po?.status === "cancelled"} onChange={(e) => setV({ ...v, invoice_number: e.target.value })} />
             </Field>
             <Field label="Perkiraan barang datang">
-              <input type="date" className="input" value={v.expected_date} disabled={locked} onChange={(e) => setV({ ...v, expected_date: e.target.value })} />
+              <input type="date" min="1900-01-01" max="2100-12-31" className="input" value={v.expected_date} disabled={locked} onChange={(e) => setV({ ...v, expected_date: e.target.value })} />
             </Field>
             <Field label="Jatuh tempo pembayaran" error={err("due_date")}>
-              <input type="date" className="input" value={v.due_date} disabled={po?.status === "cancelled"} onChange={(e) => setV({ ...v, due_date: e.target.value })} />
+              <input type="date" min="1900-01-01" max="2100-12-31" className="input" value={v.due_date} disabled={po?.status === "cancelled"} onChange={(e) => setV({ ...v, due_date: e.target.value })} />
             </Field>
           </section>
 
@@ -401,7 +401,7 @@ export function PurchaseForm({
               Semua barang di PO ini akan dicatat sebagai stok masuk (satu lot per barang). Barang untuk proyek otomatis dialokasikan ke proyeknya. Simpan perubahan PO dulu bila ada yang diubah.
             </p>
             <Field label="Tanggal diterima" required>
-              <input type="date" className="input" value={receive.date} onChange={(e) => setReceive({ ...receive, date: e.target.value })} />
+              <input type="date" min="1900-01-01" max="2100-12-31" className="input" value={receive.date} onChange={(e) => setReceive({ ...receive, date: e.target.value })} />
             </Field>
             <Field label="Lokasi penyimpanan">
               <input className="input" value={receive.location} onChange={(e) => setReceive({ ...receive, location: e.target.value })} placeholder="mis. Gudang A / Rak 2" />
@@ -421,7 +421,7 @@ export function PurchaseForm({
             className="grid gap-4 sm:grid-cols-2"
           >
             <Field label="Tanggal bayar" required error={err("paid_at")}>
-              <input type="date" className="input" value={pay.paid_at} onChange={(e) => setPay({ ...pay, paid_at: e.target.value })} />
+              <input type="date" min="1900-01-01" max="2100-12-31" className="input" value={pay.paid_at} onChange={(e) => setPay({ ...pay, paid_at: e.target.value })} />
             </Field>
             <Field label="Jumlah" required error={err("amount")}>
               <MoneyInput value={pay.amount} onChange={(n) => setPay({ ...pay, amount: n })} />

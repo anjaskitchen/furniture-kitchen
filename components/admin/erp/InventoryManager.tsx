@@ -353,7 +353,7 @@ export function InventoryManager({
               <input className="input" value={stock.invoice_number} onChange={(e) => setStock({ ...stock, invoice_number: e.target.value })} />
             </Field>
             <Field label="Tanggal pembelian" required>
-              <input type="date" className="input" value={stock.purchase_date} onChange={(e) => setStock({ ...stock, purchase_date: e.target.value })} />
+              <input type="date" min="1900-01-01" max="2100-12-31" className="input" value={stock.purchase_date} onChange={(e) => setStock({ ...stock, purchase_date: e.target.value })} />
             </Field>
             <Field label="Lokasi penyimpanan">
               <input className="input" value={stock.location} onChange={(e) => setStock({ ...stock, location: e.target.value })} placeholder="Gudang / rak" />
@@ -405,7 +405,7 @@ export function InventoryManager({
               <QtyInput value={adjust.qty} onChange={(v) => setAdjust({ ...adjust, qty: v })} />
             </Field>
             <Field label="Tanggal" required>
-              <input type="date" className="input" value={adjust.date} onChange={(e) => setAdjust({ ...adjust, date: e.target.value })} />
+              <input type="date" min="1900-01-01" max="2100-12-31" className="input" value={adjust.date} onChange={(e) => setAdjust({ ...adjust, date: e.target.value })} />
             </Field>
             <Field label="Alasan" required error={err("reason")} className="sm:col-span-2">
               <input className="input" value={adjust.reason} onChange={(e) => setAdjust({ ...adjust, reason: e.target.value })} placeholder="mis. hasil stock opname, kena air, salah kirim" />
