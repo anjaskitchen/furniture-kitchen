@@ -169,8 +169,13 @@ export function OrderForm({ initial, categories, workDaysPerWeek = 6 }: { initia
       setErrors({});
       setDirty(false);
       toast(res.message ?? "Tersimpan");
-      if (isNew && res.id) router.replace(`/admin/orders/${res.id}`);
-      else router.refresh();
+      // Setelah simpan, tutup form & kembali ke halaman sebelumnya (daftar order / proyek / laporan).
+      // Jika halaman order dibuka langsung (reload / link luar), tidak ada halaman admin sebelumnya → ke daftar order.
+      const firstLoad = (performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined)?.name ?? "";
+      const openedDirectly = new URL(firstLoad || window.location.href, window.location.origin).pathname === window.location.pathname;
+      if (!openedDirectly && window.history.length > 1) router.back();
+      else router.push("/admin/orders");
+      router.refresh();
     });
   };
 
