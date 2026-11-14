@@ -39,7 +39,7 @@ export function Footer({ settings }: { settings: SiteSettings }) {
       <div className="container grid gap-12 md:grid-cols-2 lg:grid-cols-4">
         <div className="space-y-5">
           <div className="text-cream-50">
-            <Logo name={settings.business_name} logoUrl={settings.logo_url} title={settings.brand_title} subtitle={settings.brand_subtitle} light />
+            <Logo name={settings.business_name} logoUrl={settings.logo_url} title={settings.brand_title} subtitle={settings.brand_subtitle} light size="lg" />
           </div>
           <p className="text-sm leading-relaxed text-cream-200/70">{settings.footer_text || settings.description}</p>
           <SocialLinks settings={settings} />
@@ -114,7 +114,7 @@ export function Footer({ settings }: { settings: SiteSettings }) {
       </div>
       <div className="container mt-12 flex flex-col gap-2 border-t border-white/10 pt-6 text-xs text-cream-200/50 sm:flex-row sm:justify-between">
         <p>
-          © {year} {settings.business_name}. Seluruh hak cipta dilindungi.
+          © {year} {settings.business_name}. Seluruh hak cipta dilindungi. <span className="whitespace-nowrap">Developed By Ryuki Mahesa</span>
         </p>
         <p>Custom Furniture & Kitchen Set {settings.city}</p>
       </div>
