@@ -29,14 +29,15 @@ export default async function SlipPage({ params }: { params: Params }) {
 
   return (
     <main className="min-h-screen bg-[#E8DDC8]/40 px-4 py-8 print:bg-white print:p-0">
-      <style>{`@page { size: A4; margin: 14mm; } @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }`}</style>
+      {/* Margin halaman 0 → browser tidak mencetak URL/tanggal di header & footer PDF. */}
+      <style>{`@page { size: A4; margin: 0; } @media print { html, body { background: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; } .slip-sheet { margin: 10mm !important; } }`}</style>
       <div className="mx-auto mb-4 flex max-w-3xl flex-wrap items-center justify-between gap-2 print:hidden">
         <Link href={`/admin/penggajian/${p.id}`} className="text-sm text-charcoal-700 underline">
           ← Kembali ke slip
         </Link>
         <SlipActions fileName={`${p.slip_number} ${p.full_name}`} />
       </div>
-      <article className="mx-auto max-w-3xl overflow-hidden bg-white text-sm text-[#171717] shadow-card print:max-w-none print:shadow-none">
+      <article className="slip-sheet mx-auto max-w-3xl overflow-hidden bg-white text-sm text-[#171717] shadow-card print:max-w-none print:shadow-none">
         <header className="flex items-center justify-between gap-6 bg-[#17263C] px-8 py-6 text-[#E8DDC8]">
           <div className="flex items-center gap-4">
             {s.logo_url && (

@@ -1,4 +1,5 @@
 import "server-only";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import type { OrderReport, OrderStatus } from "@/lib/orders";
 
@@ -114,8 +115,9 @@ export async function listOrders(f: OrderFilters, opts: { all?: boolean } = {}) 
   return { rows: (data ?? []).map((r) => numify<OrderRow>(r)), count: count ?? 0 };
 }
 
-export async function getOrder(id: string) {
-  const sb = await createClient();
+/** `client` opsional: dipakai halaman invoice publik (service role, setelah token diverifikasi). */
+export async function getOrder(id: string, client?: SupabaseClient) {
+  const sb = client ?? (await createClient());
   const [order, items, payments] = await Promise.all([
     sb.from("orders_view").select("*").eq("id", id).maybeSingle(),
     sb.from("order_items").select("*").eq("order_id", id).order("sort_order"),
