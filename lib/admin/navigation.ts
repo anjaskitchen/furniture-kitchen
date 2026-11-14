@@ -46,6 +46,7 @@ export const ADMIN_NAV: { title: string; items: AdminNavItem[] }[] = [
     items: [
       { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
       { href: "/admin/landing", label: "Landing Page", icon: LayoutTemplate },
+      { href: "/admin/videos", label: "Video YouTube", icon: Video },
     ],
   },
   {
@@ -85,7 +86,6 @@ export const ADMIN_NAV: { title: string; items: AdminNavItem[] }[] = [
       { href: "/admin/products", label: "Produk", icon: Package },
       { href: "/admin/categories", label: "Kategori", icon: Tags },
       { href: "/admin/portfolio", label: "Portfolio", icon: ImageIcon },
-      { href: "/admin/videos", label: "Video", icon: Video },
     ],
   },
   {
