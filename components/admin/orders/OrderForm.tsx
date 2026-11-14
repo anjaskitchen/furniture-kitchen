@@ -106,7 +106,18 @@ function Card({ title, children, action, className }: { title: string; children:
   );
 }
 
-export function OrderForm({ initial, categories, workDaysPerWeek = 6 }: { initial: OrderFormValues; categories: string[]; workDaysPerWeek?: number }) {
+export function OrderForm({
+  initial,
+  categories,
+  workDaysPerWeek = 6,
+  paymentKinds,
+}: {
+  initial: OrderFormValues;
+  categories: string[];
+  workDaysPerWeek?: number;
+  paymentKinds?: { code: string; label: string; is_active: boolean }[];
+}) {
+  const kinds = paymentKinds?.length ? paymentKinds : PAYMENT_KINDS.map((k) => ({ code: k.value as string, label: k.label as string, is_active: true }));
   const router = useRouter();
   const toast = useToast();
   const [v, setV] = useState<OrderFormValues>(initial);
@@ -543,11 +554,13 @@ export function OrderForm({ initial, categories, workDaysPerWeek = 6 }: { initia
                   <li key={p.key} className="grid grid-cols-2 gap-2 rounded-xl bg-cream-50 p-3 ring-1 ring-charcoal-900/5 md:grid-cols-[140px_120px_140px_1fr_160px_36px] md:items-center md:bg-transparent md:p-0 md:ring-0">
                     <input aria-label={`Tanggal bayar ${i + 1}`} type="date" className="input" value={p.paid_at} onChange={(e) => setPayment(p.key, { paid_at: e.target.value })} />
                     <select aria-label={`Jenis pembayaran ${i + 1}`} className="input" value={p.kind} onChange={(e) => setPayment(p.key, { kind: e.target.value })}>
-                      {PAYMENT_KINDS.map((k) => (
-                        <option key={k.value} value={k.value}>
-                          {k.label}
-                        </option>
-                      ))}
+                      {kinds
+                        .filter((k) => k.is_active || k.code === p.kind)
+                        .map((k) => (
+                          <option key={k.code} value={k.code}>
+                            {k.label}
+                          </option>
+                        ))}
                     </select>
                     <select aria-label={`Metode pembayaran ${i + 1}`} className="input" value={p.method} onChange={(e) => setPayment(p.key, { method: e.target.value })}>
                       {PAYMENT_METHODS.map((m) => (

@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import type { ActionResult } from "@/app/admin/actions";
 import { assertAdmin, AuthError } from "@/lib/admin/auth";
-import { ORDER_SOURCES, ORDER_STATUSES, PAYMENT_KINDS, PAYMENT_METHODS } from "@/lib/orders";
+import { jakartaToday, ORDER_SOURCES, ORDER_STATUSES, PAYMENT_METHODS } from "@/lib/orders";
 import { createClient } from "@/lib/supabase/server";
 
 const values = <T extends { value: string }>(list: readonly T[]) => list.map((x) => x.value) as [string, ...string[]];
@@ -48,7 +48,7 @@ const paymentSchema = z.object({
   paid_at: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Tanggal bayar tidak valid"),
   amount: money("Jumlah bayar").refine((n) => n > 0, "Jumlah bayar harus lebih dari 0"),
   method: z.enum(values(PAYMENT_METHODS)),
-  kind: z.enum(values(PAYMENT_KINDS)),
+  kind: z.string().regex(/^[a-z][a-z0-9_]{0,39}$/, "Jenis pembayaran tidak valid"),
   reference: optionalText(100),
   note: optionalText(300),
 });
@@ -164,6 +164,47 @@ export async function updateOrderStatus(id: string, status: string): Promise<Act
     if (error) throw new Error(error.message);
     revalidateOrders(id);
     return { ok: true, message: `Status: ${ORDER_STATUSES.find((s) => s.value === status)!.label}` };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+const quickSchema = z.object({
+  id: z.string().uuid(),
+  status: z.enum(values(ORDER_STATUSES)),
+  completed_at: optionalDate,
+  payment: paymentSchema.nullable().optional(),
+});
+
+/** Update cepat dari daftar order: ubah status/proses & catat pembayaran baru tanpa membuka form lengkap. */
+export async function quickUpdateOrder(input: unknown): Promise<ActionResult> {
+  try {
+    await assertAdmin();
+    const parsed = quickSchema.safeParse(input);
+    if (!parsed.success) {
+      const fieldErrors: Record<string, string> = {};
+      for (const i of parsed.error.issues) fieldErrors[i.path.join(".")] ??= i.message;
+      return { ok: false, error: parsed.error.issues[0]?.message ?? "Periksa kembali isian", fieldErrors };
+    }
+    const d = parsed.data;
+    const sb = await createClient();
+    const { data: o } = await sb.from("orders_view").select("order_date, balance, status").eq("id", d.id).maybeSingle();
+    if (!o) return { ok: false, error: "Order tidak ditemukan" };
+    if (d.payment && d.payment.amount - Number(o.balance) > 0.009) {
+      return { ok: false, error: "Pembayaran melebihi sisa tagihan", fieldErrors: { "payment.amount": "Melebihi sisa tagihan" } };
+    }
+    const completed = d.status === "completed" ? (d.completed_at ?? jakartaToday()) : null;
+    if (completed && completed < (o.order_date as string)) return { ok: false, error: "Tanggal selesai tidak boleh sebelum tanggal order" };
+    const { error } = await sb.from("orders").update({ status: d.status, completed_at: completed }).eq("id", d.id);
+    if (error) throw new Error(error.message);
+    if (d.payment) {
+      const { error: pe } = await sb.from("order_payments").insert({ ...d.payment, order_id: d.id });
+      if (pe) throw new Error(pe.message);
+    }
+    revalidateOrders(d.id);
+    revalidatePath("/admin/proyek", "layout");
+    revalidatePath("/admin/keuangan");
+    return { ok: true, message: d.payment ? "Status & pembayaran diperbarui" : "Status order diperbarui" };
   } catch (e) {
     return fail(e);
   }

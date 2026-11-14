@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { OrderForm } from "@/components/admin/orders/OrderForm";
 import { orderToForm } from "@/lib/admin/order-form";
-import { getCategorySuggestions, getOrder } from "@/lib/admin/orders-data";
+import { getCategorySuggestions, getPaymentKinds, getOrder } from "@/lib/admin/orders-data";
 import { createClient } from "@/lib/supabase/server";
 
 type Params = Promise<{ id: string }>;
@@ -19,5 +19,5 @@ export default async function OrderDetailPage({ params }: { params: Params }) {
   const [data, categories, st] = await Promise.all([getOrder(id), getCategorySuggestions(), sb.from("settings").select("work_days_per_week").eq("id", true).maybeSingle()]);
   if (!data) notFound();
   // key: form di-reset ke data terbaru setelah disimpan (router.refresh).
-  return <OrderForm key={data.order.updated_at} initial={orderToForm(data.order, data.items, data.payments)} categories={categories} workDaysPerWeek={Number(st.data?.work_days_per_week ?? 6)} />;
+  return <OrderForm key={data.order.updated_at} initial={orderToForm(data.order, data.items, data.payments)} categories={categories} workDaysPerWeek={Number(st.data?.work_days_per_week ?? 6)} paymentKinds={await getPaymentKinds()} />;
 }

@@ -157,3 +157,18 @@ export async function getCategorySuggestions() {
   for (const o of used.data ?? []) if (o.category) set.add(o.category as string);
   return [...set];
 }
+
+export interface PaymentKind {
+  code: string;
+  label: string;
+  sort_order: number;
+  is_active: boolean;
+  is_system: boolean;
+}
+
+/** Jenis pembayaran (DP, Termin, Pelunasan, …) yang diatur admin. */
+export async function getPaymentKinds(): Promise<PaymentKind[]> {
+  const sb = await createClient();
+  const { data } = await sb.from("payment_kinds").select("code, label, sort_order, is_active, is_system").order("sort_order").order("label");
+  return (data ?? []) as PaymentKind[];
+}

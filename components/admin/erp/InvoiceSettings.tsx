@@ -2,7 +2,7 @@
 import { Eye, Landmark, Pencil, Plus, Save, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import { deleteBankAccount, saveBankAccount, saveInvoiceSettings } from "@/app/admin/erp/invoice-actions";
+import { deleteBankAccount, deletePaymentKind, saveBankAccount, saveInvoiceSettings, savePaymentKind } from "@/app/admin/erp/invoice-actions";
 import { AdminModal } from "@/components/admin/AdminModal";
 import { ImageUploader } from "@/components/admin/ImageUploader";
 import { Badge, Field, FormActions, IconButton, useAction } from "./kit";
@@ -23,15 +23,39 @@ export interface InvoiceSettingsValues {
   invoice_terms: string;
   invoice_show_bank: boolean;
   work_days_per_week: number;
+  invoice_review_url: string;
+  invoice_completed_note: string;
 }
+export interface PaymentKindRow {
+  code: string;
+  label: string;
+  sort_order: number;
+  is_active: boolean;
+  is_system: boolean;
+}
+type KindForm = { code: string | null; label: string; sort_order: number; is_active: boolean };
 
 type BankForm = { id: string | null; bank_name: string; account_number: string; account_holder: string; notes: string; is_active: boolean; sort_order: number };
 
-export function InvoiceSettings({ initial, banks, siteLogo, previewOrderId }: { initial: InvoiceSettingsValues; banks: BankAccount[]; siteLogo: string | null; previewOrderId: string | null }) {
+export function InvoiceSettings({
+  initial,
+  banks,
+  kinds,
+  siteLogo,
+  previewOrderId,
+}: {
+  initial: InvoiceSettingsValues;
+  banks: BankAccount[];
+  kinds: PaymentKindRow[];
+  siteLogo: string | null;
+  previewOrderId: string | null;
+}) {
   const { run, pending, errors } = useAction();
   const [s, setS] = useState(initial);
   const [b, setB] = useState<BankForm | null>(null);
+  const [k, setK] = useState<KindForm | null>(null);
   const bank = useAction();
+  const kind = useAction();
 
   return (
     <div className="grid gap-6 lg:grid-cols-2">
@@ -69,6 +93,15 @@ export function InvoiceSettings({ initial, banks, siteLogo, previewOrderId }: { 
             <option value={7}>7 hari (setiap hari)</option>
           </select>
         </Field>
+        <div className="space-y-3 rounded-xl bg-cream-50 p-4 ring-1 ring-charcoal-900/5">
+          <p className="text-sm font-semibold">Keterangan garansi (tampil saat order berstatus Selesai)</p>
+          <Field label="Teks garansi & ulasan" error={errors.invoice_completed_note}>
+            <textarea className="input" rows={4} value={s.invoice_completed_note} onChange={(e) => setS({ ...s, invoice_completed_note: e.target.value })} />
+          </Field>
+          <Field label="Link ulasan Google Maps" error={errors.invoice_review_url} hint="Tampil sebagai tautan yang bisa diklik di invoice (PDF/online).">
+            <input className="input" inputMode="url" value={s.invoice_review_url} onChange={(e) => setS({ ...s, invoice_review_url: e.target.value })} placeholder="https://maps.app.goo.gl/..." />
+          </Field>
+        </div>
         <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-charcoal-900/10 px-4 py-3">
           <input type="checkbox" checked={s.invoice_show_bank} onChange={(e) => setS({ ...s, invoice_show_bank: e.target.checked })} className="h-5 w-5 accent-wood-500" />
           <span className="text-sm font-medium">Tampilkan rekening transfer di invoice</span>
@@ -113,7 +146,61 @@ export function InvoiceSettings({ initial, banks, siteLogo, previewOrderId }: { 
           {!banks.length && <li className="rounded-xl border border-dashed border-charcoal-900/15 p-6 text-center text-sm text-charcoal-700/70">Belum ada rekening. Tambahkan rekening agar konsumen tahu ke mana harus transfer.</li>}
         </ul>
         <p className="mt-3 text-xs text-charcoal-700/70">Rekening aktif tampil di setiap invoice sesuai urutan.</p>
+
+        <div className="mt-8 border-t border-charcoal-900/10 pt-6">
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <h2 className="font-display text-lg font-semibold">Jenis pembayaran</h2>
+            <button className="btn-outline btn-sm" onClick={() => setK({ code: null, label: "", sort_order: kinds.length + 1, is_active: true })}>
+              <Plus className="h-4 w-4" /> Jenis
+            </button>
+          </div>
+          <p className="mb-3 text-xs text-charcoal-700/70">Pilihan di form order & tombol Update (mis. DP, Termin 1, Termin 2, Pelunasan, Retensi). Jenis yang sudah dipakai sebaiknya dinonaktifkan, bukan dihapus.</p>
+          <ul className="divide-y divide-charcoal-900/5 rounded-xl border border-charcoal-900/10">
+            {kinds.map((x) => (
+              <li key={x.code} className="flex items-center justify-between gap-2 px-4 py-2.5 text-sm">
+                <span>
+                  <span className="font-medium">{x.label}</span> {!x.is_active && <Badge>Nonaktif</Badge>}
+                  {x.is_system && <span className="ml-1 text-xs text-charcoal-700/50">bawaan</span>}
+                </span>
+                <span className="flex shrink-0">
+                  <IconButton label="Edit" onClick={() => setK({ code: x.code, label: x.label, sort_order: x.sort_order, is_active: x.is_active })}>
+                    <Pencil className="h-4 w-4" />
+                  </IconButton>
+                  {!x.is_system && (
+                    <IconButton label="Hapus" danger onClick={() => kind.run(() => deletePaymentKind(x.code), { confirm: `Hapus jenis pembayaran "${x.label}"?` })}>
+                      <Trash2 className="h-4 w-4" />
+                    </IconButton>
+                  )}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
       </section>
+
+      <AdminModal open={k !== null} onClose={() => setK(null)} title={k?.code ? "Edit jenis pembayaran" : "Tambah jenis pembayaran"}>
+        {k && (
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              kind.run(() => savePaymentKind(k), { onOk: () => setK(null) });
+            }}
+            className="grid gap-4 sm:grid-cols-2"
+          >
+            <Field label="Nama" required error={kind.errors.label} className="sm:col-span-2">
+              <input className="input" value={k.label} onChange={(e) => setK({ ...k, label: e.target.value })} placeholder="cth. Termin 2" autoFocus />
+            </Field>
+            <Field label="Urutan">
+              <input type="number" min={0} className="input" value={k.sort_order} onChange={(e) => setK({ ...k, sort_order: Number(e.target.value) })} />
+            </Field>
+            <label className="flex cursor-pointer items-center gap-3 self-end rounded-xl border border-charcoal-900/10 px-4 py-3">
+              <input type="checkbox" checked={k.is_active} onChange={(e) => setK({ ...k, is_active: e.target.checked })} className="h-5 w-5 accent-wood-500" />
+              <span className="text-sm font-medium">Aktif</span>
+            </label>
+            <FormActions onCancel={() => setK(null)} pending={kind.pending} />
+          </form>
+        )}
+      </AdminModal>
 
       <AdminModal open={b !== null} onClose={() => setB(null)} title={b?.id ? "Edit rekening" : "Tambah rekening transfer"}>
         {b && (

@@ -1,4 +1,4 @@
-import { CalendarClock, Pencil, Settings2 } from "lucide-react";
+import { CalendarClock, Pencil, Settings2, ShieldCheck } from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
@@ -25,12 +25,18 @@ export default async function InvoicePage({ params }: { params: Params }) {
   const { id } = await params;
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
   const sb = await createClient();
-  const [data, s, inv, banks] = await Promise.all([
+  const [data, s, inv, banks, kinds] = await Promise.all([
     getOrder(id),
     getSettings(),
-    sb.from("settings").select("invoice_logo_url, invoice_title, invoice_footer, invoice_terms, invoice_show_bank").eq("id", true).maybeSingle(),
+    sb
+      .from("settings")
+      .select("invoice_logo_url, invoice_title, invoice_footer, invoice_terms, invoice_show_bank, invoice_review_url, invoice_completed_note")
+      .eq("id", true)
+      .maybeSingle(),
     sb.from("invoice_bank_accounts").select("id, bank_name, account_number, account_holder, notes").eq("is_active", true).order("sort_order").order("created_at"),
+    sb.from("payment_kinds").select("code, label"),
   ]);
+  const kindName = (code: string) => (kinds.data ?? []).find((k) => k.code === code)?.label ?? kindLabel(code);
   if (!data) notFound();
   const { order: o, items, payments } = data;
   const pay = paymentMeta(o.payment_status);
@@ -44,6 +50,8 @@ export default async function InvoicePage({ params }: { params: Params }) {
   const bankList = showBank ? (banks.data ?? []) : [];
   const footer = (cfg.invoice_footer as string | null)?.trim() || `Terima kasih atas kepercayaan Anda. Pertanyaan terkait invoice ini dapat disampaikan melalui WhatsApp ${s.whatsapp_number ? `+${s.whatsapp_number}` : ""}.`;
   const start = o.work_start_date ?? o.order_date;
+  const warrantyNote = ((cfg.invoice_completed_note as string | null) ?? "").trim();
+  const reviewUrl = ((cfg.invoice_review_url as string | null) ?? "").trim();
 
   return (
     <main className="min-h-screen bg-cream-100 px-4 py-8 print:bg-white print:p-0">
@@ -202,7 +210,7 @@ export default async function InvoicePage({ params }: { params: Params }) {
                 {payments.map((p) => (
                   <tr key={p.id} className="border-b border-charcoal-900/5">
                     <td className="py-1.5">{formatDateShort(p.paid_at)}</td>
-                    <td className="py-1.5">{kindLabel(p.kind)}</td>
+                    <td className="py-1.5">{kindName(p.kind)}</td>
                     <td className="py-1.5">
                       {methodLabel(p.method)}
                       {p.reference ? ` · ${p.reference}` : ""}
@@ -219,6 +227,24 @@ export default async function InvoicePage({ params }: { params: Params }) {
           <section className="mt-6">
             <p className="text-xs font-semibold uppercase tracking-wider text-charcoal-700/70">Catatan</p>
             <p className="mt-1 whitespace-pre-wrap text-charcoal-800">{o.invoice_notes}</p>
+          </section>
+        )}
+
+        {o.status === "completed" && (warrantyNote || reviewUrl) && (
+          <section className="mt-6 rounded-xl border-2 border-[#4B5138]/40 bg-[#4B5138]/5 p-4 print:break-inside-avoid">
+            <p className="flex items-center gap-2 text-sm font-bold text-[#4B5138]">
+              <ShieldCheck className="h-5 w-5" /> Aktivasi garansi 1 tahun
+            </p>
+            {o.completed_at && <p className="mt-0.5 text-xs text-charcoal-700">Pekerjaan selesai pada {formatDateShort(o.completed_at)}</p>}
+            {warrantyNote && <p className="mt-2 whitespace-pre-wrap text-sm text-charcoal-800">{warrantyNote}</p>}
+            {reviewUrl && (
+              <p className="mt-3 text-sm">
+                Beri ulasan di Google Maps:{" "}
+                <a href={reviewUrl} target="_blank" rel="noopener noreferrer" className="break-all font-semibold text-[#17263C] underline">
+                  {reviewUrl}
+                </a>
+              </p>
+            )}
           </section>
         )}
 

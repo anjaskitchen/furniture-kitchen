@@ -19,6 +19,15 @@ const settingsSchema = z.object({
   invoice_terms: zOptText(3000),
   invoice_show_bank: z.boolean(),
   work_days_per_week: z.coerce.number().int().min(5).max(7),
+  invoice_review_url: z
+    .string()
+    .trim()
+    .max(500)
+    .optional()
+    .nullable()
+    .refine((v) => !v || /^https:\/\//.test(v), "Link ulasan harus diawali https://")
+    .transform((v) => v || null),
+  invoice_completed_note: zOptText(2000),
 });
 
 export async function saveInvoiceSettings(input: unknown) {
@@ -52,5 +61,48 @@ export async function saveBankAccount(input: unknown) {
 export async function deleteBankAccount(id: string) {
   return run({ schema: zId, input: id, revalidate: PATHS, message: "Rekening dihapus" }, async (sb, bid) => {
     check(await sb.from("invoice_bank_accounts").delete().eq("id", bid));
+  });
+}
+
+// ---------------------------------------------------------------------------
+// JENIS PEMBAYARAN (DP, Termin, Pelunasan, …)
+// ---------------------------------------------------------------------------
+const kindSchema = z.object({
+  code: z.string().optional().nullable(),
+  label: zText("Nama jenis pembayaran", 1, 60),
+  sort_order: z.coerce.number().int().min(0).max(999).default(0),
+  is_active: z.boolean().default(true),
+});
+
+export async function savePaymentKind(input: unknown) {
+  return run({ schema: kindSchema, input, revalidate: PATHS, message: "Jenis pembayaran disimpan" }, async (sb, d) => {
+    if (d.code) {
+      check(await sb.from("payment_kinds").update({ label: d.label, sort_order: d.sort_order, is_active: d.is_active }).eq("code", d.code));
+      return;
+    }
+    const base =
+      d.label
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[̀-ͯ]/g, "")
+        .replace(/[^a-z0-9]+/g, "_")
+        .replace(/^_+|_+$/g, "")
+        .replace(/^(\d)/, "k_$1")
+        .slice(0, 32) || "jenis";
+    const { data: taken } = await sb.from("payment_kinds").select("code").like("code", `${base}%`);
+    const used = new Set((taken ?? []).map((r) => r.code as string));
+    let code = base;
+    for (let i = 2; used.has(code); i++) code = `${base}_${i}`;
+    check(await sb.from("payment_kinds").insert({ code, label: d.label, sort_order: d.sort_order, is_active: d.is_active }));
+  });
+}
+
+export async function deletePaymentKind(code: string) {
+  return run({ schema: z.string().min(1).max(40), input: code, revalidate: PATHS, message: "Jenis pembayaran dihapus" }, async (sb, c) => {
+    const { data: k } = await sb.from("payment_kinds").select("is_system").eq("code", c).maybeSingle();
+    if (k?.is_system) throw new Error("Jenis bawaan tidak bisa dihapus — ubah namanya atau nonaktifkan saja.");
+    const { count } = await sb.from("order_payments").select("id", { count: "exact", head: true }).eq("kind", c);
+    if (count) throw new Error(`Sudah dipakai di ${count} pembayaran. Nonaktifkan saja agar riwayat tetap aman.`);
+    check(await sb.from("payment_kinds").delete().eq("code", c));
   });
 }
