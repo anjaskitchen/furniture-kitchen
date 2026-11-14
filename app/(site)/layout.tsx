@@ -17,7 +17,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
         Lewati ke konten
       </a>
       <AnnouncementBar text={settings.announcement_text} url={settings.announcement_url} />
-      <Navbar businessName={settings.business_name} logoUrl={settings.logo_url} whatsapp={settings.whatsapp_number} whatsappMessage={waMessage} />
+      <Navbar businessName={settings.business_name} logoUrl={settings.logo_url} brandTitle={settings.brand_title} brandSubtitle={settings.brand_subtitle} whatsapp={settings.whatsapp_number} whatsappMessage={waMessage} />
       <main id="main" className="min-h-[60vh]">
         {children}
       </main>

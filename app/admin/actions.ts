@@ -272,6 +272,8 @@ const optionalUrl = z
 const settingsSchema = z.object({
   business_name: z.string().trim().min(2, "Nama bisnis wajib diisi").max(100),
   tagline: optional(150),
+  brand_title: optional(60),
+  brand_subtitle: optional(60),
   description: optional(500),
   logo_url: optionalUrl,
   address: optional(300),

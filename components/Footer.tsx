@@ -39,7 +39,7 @@ export function Footer({ settings }: { settings: SiteSettings }) {
       <div className="container grid gap-12 md:grid-cols-2 lg:grid-cols-4">
         <div className="space-y-5">
           <div className="text-cream-50">
-            <Logo name={settings.business_name} logoUrl={settings.logo_url} light />
+            <Logo name={settings.business_name} logoUrl={settings.logo_url} title={settings.brand_title} subtitle={settings.brand_subtitle} light />
           </div>
           <p className="text-sm leading-relaxed text-cream-200/70">{settings.footer_text || settings.description}</p>
           <SocialLinks settings={settings} />

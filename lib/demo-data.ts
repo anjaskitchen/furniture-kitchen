@@ -61,6 +61,8 @@ export const demoSettings: SiteSettings = {
   manual_rating: 4.9,
   manual_review_count: 5,
   whatsapp_default_message: "Halo, saya ingin konsultasi custom furniture.",
+  brand_title: "Kitchen Set Custom",
+  brand_subtitle: "Bandung",
   announcement_text: null,
   announcement_url: null,
   hero_card_title: "Harga transparan per meter",

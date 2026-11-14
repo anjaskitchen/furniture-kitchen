@@ -14,11 +14,15 @@ import { WhatsAppIcon } from "./icons";
 export function Navbar({
   businessName,
   logoUrl,
+  brandTitle,
+  brandSubtitle,
   whatsapp,
   whatsappMessage,
 }: {
   businessName: string;
   logoUrl: string | null;
+  brandTitle?: string | null;
+  brandSubtitle?: string | null;
   whatsapp: string | null;
   whatsappMessage: string;
 }) {
@@ -49,7 +53,7 @@ export function Navbar({
       )}
     >
       <nav className="container flex h-16 items-center justify-between gap-4 lg:h-20" aria-label="Navigasi utama">
-        <Logo name={businessName} logoUrl={logoUrl} />
+        <Logo name={businessName} logoUrl={logoUrl} title={brandTitle} subtitle={brandSubtitle} compactAtLg />
 
         <ul className="hidden items-center gap-1 lg:flex">
           {NAV_ITEMS.map((item) => (

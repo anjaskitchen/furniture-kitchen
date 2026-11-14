@@ -207,6 +207,9 @@ export interface ContactMessage {
 export interface SiteSettings {
   business_name: string;
   tagline: string | null;
+  /** Tulisan di samping logo navbar: baris atas & bawah. */
+  brand_title: string | null;
+  brand_subtitle: string | null;
   description: string | null;
   logo_url: string | null;
   address: string | null;

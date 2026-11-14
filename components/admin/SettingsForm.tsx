@@ -18,6 +18,8 @@ const SECTIONS: { title: string; fields: FieldSpec[] }[] = [
       { key: "tagline", label: "Tagline" },
       { key: "description", label: "Deskripsi bisnis (SEO)", type: "textarea", full: true },
       { key: "logo_url", label: "Logo", type: "image", full: true },
+      { key: "brand_title", label: "Tulisan samping logo — baris atas", help: "cth. Kitchen Set Custom. Kosongkan kedua baris untuk menampilkan logo saja." },
+      { key: "brand_subtitle", label: "Tulisan samping logo — baris bawah", help: "cth. Bandung" },
     ],
   },
   {
