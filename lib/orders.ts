@@ -205,3 +205,38 @@ export interface PeriodKpi {
   quotations: number;
   leads: number;
 }
+
+// ---------------------------------------------------------------------------
+// Jangka waktu pengerjaan → tanggal selesai maksimal (sama dengan public.finish_date di database)
+// ---------------------------------------------------------------------------
+export const DURATION_UNITS = [
+  { value: "work_days", label: "hari kerja" },
+  { value: "calendar_days", label: "hari kalender" },
+  { value: "weeks", label: "minggu" },
+  { value: "months", label: "bulan" },
+] as const;
+export const durationLabel = (n: number | null | undefined, unit: string | null | undefined) =>
+  n ? `${n} ${DURATION_UNITS.find((u) => u.value === unit)?.label ?? "hari"}` : "";
+
+/** work_days: hari kerja per minggu (6 = Senin–Sabtu); hari mulai dihitung hari ke-1 bila hari kerja. */
+export function finishDate(start: string, n: number, unit: string, daysPerWeek = 6): string | null {
+  if (!isValidDate(start) || !Number.isInteger(n) || n < 1 || n > 1000) return null;
+  if (unit === "calendar_days") return addDays(start, n - 1);
+  if (unit === "weeks") return addDays(start, n * 7 - 1);
+  if (unit === "months") {
+    const d = toUtc(start);
+    const target = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + n, d.getUTCDate()));
+    // Tanggal 31 + 1 bulan → mengikuti Postgres (dibatasi akhir bulan).
+    const lastDay = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + n + 1, 0)).getUTCDate();
+    const fixed = target.getUTCMonth() === (d.getUTCMonth() + n) % 12 ? target : new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + n, lastDay));
+    return addDays(fmt(fixed), -1);
+  }
+  let d = start;
+  let counted = 0;
+  for (;;) {
+    const iso = toUtc(d).getUTCDay() || 7; // 1 = Senin … 7 = Minggu
+    if (iso <= daysPerWeek) counted++;
+    if (counted >= n) return d;
+    d = addDays(d, 1);
+  }
+}

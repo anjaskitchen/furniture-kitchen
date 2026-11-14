@@ -49,5 +49,6 @@ export default async function NewOrderPage({ searchParams }: { searchParams: SP 
     }
   }
 
-  return <OrderForm initial={form} categories={categories} />;
+  const { data: st } = await sb.from("settings").select("work_days_per_week").eq("id", true).maybeSingle();
+  return <OrderForm initial={form} categories={categories} workDaysPerWeek={Number(st?.work_days_per_week ?? 6)} />;
 }

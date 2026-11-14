@@ -4,6 +4,7 @@ import {
   Boxes,
   CalendarCheck,
   CalendarDays,
+  FileCog,
   Hammer,
   IdCard,
   Landmark,
@@ -52,6 +53,7 @@ export const ADMIN_NAV: { title: string; items: AdminNavItem[] }[] = [
     items: [
       { href: "/admin/orders", label: "Order", icon: Receipt },
       { href: "/admin/reports", label: "Laporan & KPI", icon: BarChart3 },
+      { href: "/admin/invoice-settings", label: "Pengaturan Invoice", icon: FileCog },
     ],
   },
   {

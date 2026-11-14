@@ -42,3 +42,14 @@ test("resolvePeriod menolak tanggal tidak valid & memakai default", () => {
   assert.equal(custom.from, "2026-10-01");
   assert.equal(resolvePeriod({ preset: "last_year" }).preset, "last_year");
 });
+
+test("finishDate menghitung tanggal selesai maksimal (sama dengan database)", async () => {
+  const { finishDate } = await import("../lib/orders.ts");
+  assert.equal(finishDate("2026-11-11", 60, "work_days", 6), "2027-01-19");
+  assert.equal(finishDate("2026-11-11", 2, "months"), "2027-01-10");
+  assert.equal(finishDate("2026-11-11", 60, "calendar_days"), "2027-01-09");
+  assert.equal(finishDate("2026-11-15", 1, "work_days", 6), "2026-11-16"); // mulai Minggu → Senin
+  assert.equal(finishDate("2026-11-13", 2, "work_days", 5), "2026-11-16"); // Jumat + Senin
+  assert.equal(finishDate("2026-11-11", 2, "weeks"), "2026-11-24");
+  assert.equal(finishDate("2026-11-11", 0, "work_days"), null);
+});

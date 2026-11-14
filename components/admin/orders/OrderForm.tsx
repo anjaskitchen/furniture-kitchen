@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import { deleteOrder, saveOrder } from "@/app/admin/orders-actions";
 import { useToast } from "@/components/Toast";
 import { formatRupiah } from "@/lib/format";
-import { ITEM_UNITS, jakartaToday, ORDER_SOURCES, ORDER_STATUSES, PAYMENT_KINDS, PAYMENT_METHODS, paymentMeta } from "@/lib/orders";
+import { DURATION_UNITS, finishDate, formatDateShort, ITEM_UNITS, jakartaToday, ORDER_SOURCES, ORDER_STATUSES, PAYMENT_KINDS, PAYMENT_METHODS, paymentMeta } from "@/lib/orders";
 import { cn } from "@/lib/utils";
 import { whatsappLink } from "@/lib/whatsapp";
 import { PaymentBadge, StatusBadge } from "./ui";
@@ -18,6 +18,9 @@ export interface OrderFormItem {
   qty: string;
   unit: string;
   unit_price: number;
+  /** Ukuran opsional (meter). Bila keduanya diisi: qty = panjang × tinggi (m²). */
+  length_m: string;
+  height_m: string;
 }
 export interface OrderFormPayment {
   key: string;
@@ -48,6 +51,10 @@ export interface OrderFormValues {
   survey_request_id: string | null;
   contact_message_id: string | null;
   notes: string;
+  work_duration: string;
+  work_duration_unit: string;
+  work_start_date: string;
+  invoice_notes: string;
   items: OrderFormItem[];
   payments: OrderFormPayment[];
 }
@@ -58,6 +65,10 @@ const parseQty = (v: string) => {
   const n = Number(v.replace(",", "."));
   return Number.isFinite(n) ? n : 0;
 };
+const hasDims = (i: OrderFormItem) => parseQty(i.length_m) > 0 && parseQty(i.height_m) > 0;
+/** Qty efektif: panjang × tinggi bila ukuran diisi, selain itu qty manual. */
+const itemQty = (i: OrderFormItem) => (hasDims(i) ? Math.round(parseQty(i.length_m) * parseQty(i.height_m) * 100) / 100 : parseQty(i.qty));
+const fmtNum = (n: number) => n.toLocaleString("id-ID", { maximumFractionDigits: 3 });
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
 /** Input rupiah dengan pemisah ribuan; nilai disimpan sebagai angka. */
@@ -95,7 +106,7 @@ function Card({ title, children, action, className }: { title: string; children:
   );
 }
 
-export function OrderForm({ initial, categories }: { initial: OrderFormValues; categories: string[] }) {
+export function OrderForm({ initial, categories, workDaysPerWeek = 6 }: { initial: OrderFormValues; categories: string[]; workDaysPerWeek?: number }) {
   const router = useRouter();
   const toast = useToast();
   const [v, setV] = useState<OrderFormValues>(initial);
@@ -113,7 +124,7 @@ export function OrderForm({ initial, categories }: { initial: OrderFormValues; c
   const setPayment = (key: string, patch: Partial<OrderFormPayment>) => set("payments", v.payments.map((p) => (p.key === key ? { ...p, ...patch } : p)));
 
   const totals = useMemo(() => {
-    const subtotal = round2(v.items.reduce((a, i) => a + round2(parseQty(i.qty) * i.unit_price), 0));
+    const subtotal = round2(v.items.reduce((a, i) => a + round2(itemQty(i) * i.unit_price), 0));
     const total = Math.max(0, round2(subtotal - v.discount + v.additional_fee));
     const paid = round2(v.payments.reduce((a, p) => a + (p.amount || 0), 0));
     const balance = Math.max(0, round2(total - paid));
@@ -138,7 +149,15 @@ export function OrderForm({ initial, categories }: { initial: OrderFormValues; c
     startSave(async () => {
       const payload = {
         ...v,
-        items: v.items.map((i) => ({ name: i.name, description: i.description, qty: parseQty(i.qty), unit: i.unit, unit_price: i.unit_price })),
+        items: v.items.map((i) => ({
+          name: i.name,
+          description: i.description,
+          qty: itemQty(i),
+          unit: hasDims(i) ? "m²" : i.unit,
+          unit_price: i.unit_price,
+          length_m: hasDims(i) ? parseQty(i.length_m) : null,
+          height_m: hasDims(i) ? parseQty(i.height_m) : null,
+        })),
         payments: v.payments.map((p) => ({ paid_at: p.paid_at, amount: p.amount, method: p.method, kind: p.kind, reference: p.reference, note: p.note })),
       };
       const res = await saveOrder(payload);
@@ -167,7 +186,8 @@ export function OrderForm({ initial, categories }: { initial: OrderFormValues; c
     });
   };
 
-  const addItem = () => set("items", [...v.items, { key: newKey(), name: "", description: "", qty: "1", unit: "meter", unit_price: 0 }]);
+  const addItem = () => set("items", [...v.items, { key: newKey(), name: "", description: "", qty: "1", unit: "meter", unit_price: 0, length_m: "", height_m: "" }]);
+  const finish = v.work_duration ? finishDate(v.work_start_date || v.order_date, Number(v.work_duration), v.work_duration_unit, workDaysPerWeek) : null;
   const addPayment = (fillBalance = false) =>
     set("payments", [
       ...v.payments,
@@ -289,6 +309,46 @@ export function OrderForm({ initial, categories }: { initial: OrderFormValues; c
                 <input id="o-due" type="date" className="input" value={v.due_date} onChange={(e) => set("due_date", e.target.value)} />
                 <FieldError msg={err("due_date")} />
               </div>
+              <div className="rounded-xl bg-cream-50 p-3 ring-1 ring-charcoal-900/5 sm:col-span-2">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                  <div className="sm:col-span-2">
+                    <label className="label" htmlFor="o-duration">Jangka waktu pengerjaan</label>
+                    <div className="flex gap-2">
+                      <input
+                        id="o-duration"
+                        inputMode="numeric"
+                        className="input w-24 text-right tabular-nums"
+                        value={v.work_duration}
+                        onChange={(e) => set("work_duration", e.target.value.replace(/\D/g, "").slice(0, 4))}
+                        placeholder="60"
+                      />
+                      <select aria-label="Satuan jangka waktu" className="input" value={v.work_duration_unit} onChange={(e) => set("work_duration_unit", e.target.value)}>
+                        {DURATION_UNITS.map((u) => (
+                          <option key={u.value} value={u.value}>
+                            {u.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <FieldError msg={err("work_duration")} />
+                  </div>
+                  <div>
+                    <label className="label" htmlFor="o-wstart">Mulai pengerjaan</label>
+                    <input id="o-wstart" type="date" min="1900-01-01" max="2100-12-31" className="input" value={v.work_start_date} onChange={(e) => set("work_start_date", e.target.value)} />
+                    <FieldError msg={err("work_start_date")} />
+                  </div>
+                </div>
+                <p className="mt-2 text-sm">
+                  {finish ? (
+                    <>
+                      Estimasi selesai maksimal: <strong>{formatDateShort(finish)}</strong>
+                      <span className="text-xs text-charcoal-700/70"> (dihitung dari {v.work_start_date ? "tanggal mulai" : "tanggal order"}{v.work_duration_unit === "work_days" ? `, ${workDaysPerWeek} hari kerja/minggu` : ""})</span>
+                    </>
+                  ) : (
+                    <span className="text-xs text-charcoal-700/70">Isi jangka waktu (mis. 60 hari kerja atau 2 bulan) agar tanggal selesai maksimal tercantum di invoice & jadwal proyek.</span>
+                  )}
+                </p>
+              </div>
               <div className="sm:col-span-2">
                 <span className="label">Status</span>
                 <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1 [scrollbar-width:none] sm:flex-wrap" role="radiogroup" aria-label="Status order">
@@ -324,6 +384,17 @@ export function OrderForm({ initial, categories }: { initial: OrderFormValues; c
               <div className="sm:col-span-2">
                 <label className="label" htmlFor="o-notes">Catatan internal</label>
                 <textarea id="o-notes" rows={3} className="input" value={v.notes} onChange={(e) => set("notes", e.target.value)} placeholder="Spesifikasi, warna HPL, catatan survey, dll." />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="label" htmlFor="o-invnotes">Catatan untuk konsumen (tampil di invoice)</label>
+                <textarea
+                  id="o-invnotes"
+                  rows={2}
+                  className="input"
+                  value={v.invoice_notes}
+                  onChange={(e) => set("invoice_notes", e.target.value)}
+                  placeholder="cth. Warna HPL Taco TH 123, termasuk pemasangan & pengiriman area Bandung."
+                />
               </div>
             </div>
           </Card>
@@ -361,12 +432,14 @@ export function OrderForm({ initial, categories }: { initial: OrderFormValues; c
                     <input
                       aria-label={`Qty item ${i + 1}`}
                       inputMode="decimal"
-                      className={cn("input text-right tabular-nums", err(`items.${i}.qty`) && "!border-red-400")}
-                      value={it.qty}
+                      readOnly={hasDims(it)}
+                      title={hasDims(it) ? "Dihitung otomatis dari panjang × tinggi" : undefined}
+                      className={cn("input text-right tabular-nums", hasDims(it) && "bg-cream-100 text-charcoal-700", err(`items.${i}.qty`) && "!border-red-400")}
+                      value={hasDims(it) ? fmtNum(itemQty(it)) : it.qty}
                       onChange={(e) => setItem(it.key, { qty: e.target.value.replace(/[^\d.,]/g, "") })}
                     />
-                    <select aria-label={`Satuan item ${i + 1}`} className="input" value={it.unit} onChange={(e) => setItem(it.key, { unit: e.target.value })}>
-                      {[...new Set([...ITEM_UNITS, it.unit])].map((u) => (
+                    <select aria-label={`Satuan item ${i + 1}`} className="input" disabled={hasDims(it)} value={hasDims(it) ? "m²" : it.unit} onChange={(e) => setItem(it.key, { unit: e.target.value })}>
+                      {[...new Set([...ITEM_UNITS, it.unit, hasDims(it) ? "m²" : it.unit])].map((u) => (
                         <option key={u} value={u}>
                           {u}
                         </option>
@@ -375,7 +448,7 @@ export function OrderForm({ initial, categories }: { initial: OrderFormValues; c
                     <div className="col-span-2 md:col-span-1">
                       <MoneyInput ariaLabel={`Harga satuan item ${i + 1}`} value={it.unit_price} onChange={(n) => setItem(it.key, { unit_price: n })} />
                     </div>
-                    <p className="text-sm font-semibold tabular-nums md:text-right">{formatRupiah(round2(parseQty(it.qty) * it.unit_price))}</p>
+                    <p className="text-sm font-semibold tabular-nums md:text-right">{formatRupiah(round2(itemQty(it) * it.unit_price))}</p>
                     <button
                       type="button"
                       onClick={() => set("items", v.items.filter((x) => x.key !== it.key))}
@@ -385,8 +458,53 @@ export function OrderForm({ initial, categories }: { initial: OrderFormValues; c
                       <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
-                  {(err(`items.${i}.name`) || err(`items.${i}.qty`) || err(`items.${i}.unit_price`)) && (
-                    <p className="mt-1 text-xs text-red-600">{err(`items.${i}.name`) ?? err(`items.${i}.qty`) ?? err(`items.${i}.unit_price`)}</p>
+                  <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-charcoal-700">
+                    <span className="font-medium">Ukuran:</span>
+                    <label className="flex items-center gap-1">
+                      P
+                      <input
+                        aria-label={`Panjang item ${i + 1} (meter)`}
+                        inputMode="decimal"
+                        className="input !w-20 !px-2 !py-1.5 text-right text-xs tabular-nums"
+                        value={it.length_m}
+                        placeholder="2"
+                        onChange={(e) => setItem(it.key, { length_m: e.target.value.replace(/[^\d.,]/g, "") })}
+                      />
+                      m
+                    </label>
+                    <span>×</span>
+                    <label className="flex items-center gap-1">
+                      T
+                      <input
+                        aria-label={`Tinggi item ${i + 1} (meter)`}
+                        inputMode="decimal"
+                        className="input !w-20 !px-2 !py-1.5 text-right text-xs tabular-nums"
+                        value={it.height_m}
+                        placeholder="0,80"
+                        onChange={(e) => setItem(it.key, { height_m: e.target.value.replace(/[^\d.,]/g, "") })}
+                      />
+                      m
+                    </label>
+                    {hasDims(it) ? (
+                      <span>
+                        = <strong className="tabular-nums">{fmtNum(itemQty(it))} m²</strong> × {formatRupiah(it.unit_price)}/m²
+                        <button type="button" className="ml-2 text-red-600 underline" onClick={() => setItem(it.key, { length_m: "", height_m: "" })}>
+                          hapus ukuran
+                        </button>
+                      </span>
+                    ) : (
+                      <span className="text-charcoal-700/60">opsional — isi panjang & tinggi untuk menghitung luas otomatis (harga per m²)</span>
+                    )}
+                  </div>
+                  <input
+                    aria-label={`Keterangan item ${i + 1}`}
+                    className="input mt-2 !py-1.5 text-xs"
+                    value={it.description}
+                    placeholder="Keterangan item (opsional, tampil di invoice) — mis. HPL Taco TH 123, rel soft close"
+                    onChange={(e) => setItem(it.key, { description: e.target.value })}
+                  />
+                  {(err(`items.${i}.name`) || err(`items.${i}.qty`) || err(`items.${i}.unit_price`) || err(`items.${i}.length_m`) || err(`items.${i}.height_m`)) && (
+                    <p className="mt-1 text-xs text-red-600">{err(`items.${i}.name`) ?? err(`items.${i}.qty`) ?? err(`items.${i}.unit_price`) ?? err(`items.${i}.length_m`) ?? err(`items.${i}.height_m`)}</p>
                   )}
                 </li>
               ))}

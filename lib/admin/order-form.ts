@@ -26,7 +26,11 @@ export function emptyOrderForm(): OrderFormValues {
     survey_request_id: null,
     contact_message_id: null,
     notes: "",
-    items: [{ key: key(), name: "", description: "", qty: "1", unit: "meter", unit_price: 0 }],
+    work_duration: "",
+    work_duration_unit: "work_days",
+    work_start_date: "",
+    invoice_notes: "",
+    items: [{ key: key(), name: "", description: "", qty: "1", unit: "meter", unit_price: 0, length_m: "", height_m: "" }],
     payments: [],
   };
 }
@@ -52,7 +56,11 @@ export function orderToForm(o: OrderRow, items: OrderItemRow[], payments: OrderP
     survey_request_id: o.survey_request_id,
     contact_message_id: o.contact_message_id,
     notes: o.notes ?? "",
-    items: items.map((i) => ({ key: i.id, name: i.name, description: i.description ?? "", qty: String(i.qty), unit: i.unit, unit_price: i.unit_price })),
+    work_duration: o.work_duration ? String(o.work_duration) : "",
+    work_duration_unit: o.work_duration_unit ?? "work_days",
+    work_start_date: o.work_start_date ?? "",
+    invoice_notes: o.invoice_notes ?? "",
+    items: items.map((i) => ({ key: i.id, name: i.name, description: i.description ?? "", qty: String(i.qty), unit: i.unit, unit_price: i.unit_price, length_m: i.length_m ? String(i.length_m) : "", height_m: i.height_m ? String(i.height_m) : "" })),
     payments: payments.map((p) => ({
       key: p.id,
       paid_at: p.paid_at,

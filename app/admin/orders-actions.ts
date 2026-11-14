@@ -29,12 +29,19 @@ const optionalDate = z
   .refine((v) => !v || /^\d{4}-\d{2}-\d{2}$/.test(v), "Tanggal tidak valid")
   .transform((v) => v || null);
 
+const dim = (label: string) =>
+  z
+    .union([z.literal(""), z.null(), z.undefined(), z.coerce.number({ message: `${label} harus angka` }).gt(0, `${label} harus lebih dari 0`).max(1000, `${label} terlalu besar`)])
+    .transform((v) => (v === "" || v === undefined ? null : v));
+
 const itemSchema = z.object({
   name: z.string().trim().min(1, "Nama item wajib diisi").max(200),
   description: optionalText(500),
   qty: z.coerce.number({ message: "Qty harus angka" }).gt(0, "Qty harus lebih dari 0").max(100_000),
   unit: z.string().trim().max(20).default("unit"),
   unit_price: money("Harga satuan"),
+  length_m: dim("Panjang"),
+  height_m: dim("Tinggi"),
 });
 
 const paymentSchema = z.object({
@@ -73,6 +80,12 @@ const orderSchema = z
     survey_request_id: z.string().uuid().optional().nullable(),
     contact_message_id: z.string().uuid().optional().nullable(),
     notes: optionalText(2000),
+    work_duration: z
+      .union([z.literal(""), z.null(), z.coerce.number({ message: "Jangka waktu harus angka" }).int("Jangka waktu harus bilangan bulat").min(1).max(1000)])
+      .transform((v) => (v === "" ? null : v)),
+    work_duration_unit: z.enum(["work_days", "calendar_days", "weeks", "months"]),
+    work_start_date: optionalDate,
+    invoice_notes: optionalText(2000),
     items: z.array(itemSchema).min(1, "Tambahkan minimal 1 item").max(100),
     payments: z.array(paymentSchema).max(50),
   })
@@ -85,6 +98,7 @@ const orderSchema = z
       ctx.addIssue({ code: "custom", path: ["payments"], message: "Total pembayaran melebihi total order" });
     }
     if (o.due_date && o.due_date < o.order_date) ctx.addIssue({ code: "custom", path: ["due_date"], message: "Jatuh tempo tidak boleh sebelum tanggal order" });
+    if (o.work_start_date && o.work_start_date < o.order_date) ctx.addIssue({ code: "custom", path: ["work_start_date"], message: "Tanggal mulai pengerjaan tidak boleh sebelum tanggal order" });
     if (o.completed_at && o.completed_at < o.order_date) {
       ctx.addIssue({ code: "custom", path: ["completed_at"], message: "Tanggal selesai tidak boleh sebelum tanggal order" });
     }

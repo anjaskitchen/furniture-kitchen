@@ -30,6 +30,11 @@ export interface OrderRow {
   survey_request_id: string | null;
   contact_message_id: string | null;
   notes: string | null;
+  work_duration: number | null;
+  work_duration_unit: string;
+  work_start_date: string | null;
+  estimated_finish_date: string | null;
+  invoice_notes: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -43,6 +48,8 @@ export interface OrderItemRow {
   unit_price: number;
   line_total: number;
   sort_order: number;
+  length_m: number | null;
+  height_m: number | null;
 }
 
 export interface OrderPaymentRow {
@@ -55,7 +62,7 @@ export interface OrderPaymentRow {
   note: string | null;
 }
 
-const NUMERIC = ["subtotal", "discount", "additional_fee", "total", "cost_estimate", "paid_amount", "balance", "gross_profit", "items_count", "qty", "unit_price", "line_total", "amount"];
+const NUMERIC = ["subtotal", "discount", "additional_fee", "total", "cost_estimate", "paid_amount", "balance", "gross_profit", "items_count", "qty", "unit_price", "line_total", "amount", "length_m", "height_m", "work_duration"];
 
 /** Postgres numeric dikirim sebagai string — ubah ke number. */
 function numify<T>(row: Record<string, unknown>): T {
