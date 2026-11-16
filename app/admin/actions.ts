@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { internalEmail, isInternalEmail, USERNAME_HINT, USERNAME_PATTERN } from "@/lib/admin/accounts";
@@ -336,6 +336,18 @@ export async function saveSettings(values: Record<string, unknown>): Promise<Act
     if (error) throw new Error(error.message);
     revalidatePath("/", "layout");
     return { ok: true, message: "Pengaturan disimpan" };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+/** Ambil ulang review Google sekarang (tanpa menunggu cache 1 jam). */
+export async function refreshGoogleReviews(): Promise<ActionResult> {
+  try {
+    await assertAdmin();
+    revalidateTag("google-reviews");
+    revalidatePath("/", "layout");
+    return { ok: true, message: "Review Google diperbarui" };
   } catch (e) {
     return fail(e);
   }

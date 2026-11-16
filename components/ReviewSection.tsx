@@ -1,4 +1,4 @@
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, PenLine } from "lucide-react";
 import type { ReviewSummary } from "@/types";
 import { EmptyState } from "./EmptyState";
 import { ReviewSlider } from "./ReviewSlider";
@@ -20,7 +20,7 @@ export function ReviewSection({
   const reviews = limit ? summary.reviews.slice(0, limit) : summary.reviews;
   return (
     <div>
-      <div className="mb-10 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+      <div className="mb-10 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
         <div>
           {heading && (
             <>
@@ -43,9 +43,16 @@ export function ReviewSection({
               : "Review pilihan dari customer — lihat ulasan lengkap langsung di Google Maps."}
           </p>
         </div>
-        <a href={summary.mapsUrl} target="_blank" rel="noopener noreferrer" className="btn-outline shrink-0">
-          Lihat Semua Review di Google <ExternalLink className="h-4 w-4" />
-        </a>
+        <div className="flex shrink-0 flex-wrap gap-3">
+          {summary.writeReviewUrl && (
+            <a href={summary.writeReviewUrl} target="_blank" rel="noopener noreferrer" className="btn-primary">
+              <PenLine className="h-4 w-4" /> Tulis Ulasan
+            </a>
+          )}
+          <a href={summary.mapsUrl} target="_blank" rel="noopener noreferrer" className="btn-outline">
+            Lihat Semua Review di Google <ExternalLink className="h-4 w-4" />
+          </a>
+        </div>
       </div>
       {reviews.length ? <ReviewSlider reviews={reviews} /> : <EmptyState title="Belum ada review" />}
       {summary.source === "google" && <p className="mt-4 text-right text-xs text-charcoal-700/60 dark:text-cream-200/40">Ulasan dari Google</p>}

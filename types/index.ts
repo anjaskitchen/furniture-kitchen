@@ -224,6 +224,8 @@ export interface SiteSettings {
   google_maps_url: string | null;
   google_maps_embed_query: string | null;
   google_place_id: string | null;
+  /** Link tulis ulasan Google (diatur di Pengaturan Invoice). */
+  invoice_review_url?: string | null;
   opening_hours: string | null;
   hero_title: string | null;
   hero_subtitle: string | null;
@@ -318,6 +320,8 @@ export interface DisplayReview {
   text: string;
   date: string;
   relativeTime?: string;
+  /** Link profil penulis di Google (atribusi wajib untuk data Google). */
+  url?: string;
 }
 
 export interface ReviewSummary {
@@ -327,4 +331,6 @@ export interface ReviewSummary {
   totalReviews: number;
   reviews: DisplayReview[];
   mapsUrl: string;
+  /** Link langsung ke form "Tulis ulasan" Google. */
+  writeReviewUrl?: string | null;
 }

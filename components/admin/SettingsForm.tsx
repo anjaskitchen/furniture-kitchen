@@ -33,7 +33,7 @@ const SECTIONS: { title: string; fields: FieldSpec[] }[] = [
       { key: "city", label: "Kota (untuk SEO lokal)" },
       { key: "google_maps_url", label: "Link Google Maps" },
       { key: "google_maps_embed_query", label: "Query peta embed", help: "Nama bisnis + kota, atau koordinat 'lat,lng'" },
-      { key: "google_place_id", label: "Google Place ID (untuk review live)", help: "Lihat README: Cara mengatur Google Review" },
+      { key: "google_place_id", label: "Google Place ID (untuk review live)", help: "Boleh dikosongkan — dicari otomatis dari Link Google Maps. Isi hanya jika hasil otomatis salah." },
     ],
   },
   {

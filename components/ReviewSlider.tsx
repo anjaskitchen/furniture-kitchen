@@ -23,7 +23,15 @@ export function ReviewSlider({ reviews }: { reviews: DisplayReview[] }) {
               </span>
             )}
             <div>
-              <p className="text-sm font-semibold">{r.authorName}</p>
+              <p className="text-sm font-semibold">
+                {r.url ? (
+                  <a href={r.url} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                    {r.authorName}
+                  </a>
+                ) : (
+                  r.authorName
+                )}
+              </p>
               <p className="text-xs text-charcoal-700/70 dark:text-cream-200/50">{r.relativeTime || formatDateID(r.date)}</p>
             </div>
           </div>
