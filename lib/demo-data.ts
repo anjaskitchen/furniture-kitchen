@@ -368,6 +368,7 @@ export const demoHomeSections: HomeSection[] = (
     ["featured_products", "Katalog", "Produk pilihan", "Desain favorit customer kami. Semua ukuran dan warna bisa disesuaikan.", "Lihat Katalog", "/katalog", 8],
     ["calculator", "Harga Transparan", "Hitung estimasi biaya dalam 1 menit", "Pilih jenis furniture, material, ukuran, dan opsi tambahan. Kalkulator kami langsung menampilkan rincian biaya — tanpa perlu menunggu penawaran.", "Hitung Estimasi Harga", "/kalkulator", 3],
     ["portfolio", "Portfolio", "Hasil pekerjaan kami", null, "Lihat Portfolio", "/portfolio", 6],
+    ["clients", "Klien Kami", "Dipercaya instansi pemerintah & perusahaan", null, null, null, 24],
     ["videos", "Video", "Lihat proses & hasil kerja", null, "Semua Video", "/video", 2],
     ["reviews", "Review Customer", "Apa kata customer kami", null, "Lihat Semua Review", "/review", 6],
     ["advantages", "Kenapa Kami", "Dikerjakan serius, dari survei sampai instalasi", null, null, null, 6],

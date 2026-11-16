@@ -1,6 +1,7 @@
 import { ArrowRight, ArrowUpRight, Calculator, PencilRuler } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { ClientLogos } from "@/components/ClientLogos";
 import { CtaBand } from "@/components/CtaBand";
 import { FaqList } from "@/components/FaqList";
 import { FeatureIcon } from "@/components/FeatureIcon";
@@ -21,6 +22,7 @@ import { cn, safeUrl } from "@/lib/utils";
 import { whatsappLink } from "@/lib/whatsapp";
 import {
   getCategories,
+  getClients,
   getFaqs,
   getFeatures,
   getHomeSections,
@@ -41,6 +43,7 @@ const DEFAULTS: Record<HomeSectionKey, { eyebrow: string; title: string }> = {
   featured_products: { eyebrow: "Katalog", title: "Produk pilihan" },
   calculator: { eyebrow: "Harga Transparan", title: "Hitung estimasi biaya dalam 1 menit" },
   portfolio: { eyebrow: "Portfolio", title: "Hasil pekerjaan kami" },
+  clients: { eyebrow: "Klien Kami", title: "Dipercaya instansi pemerintah & perusahaan" },
   videos: { eyebrow: "Video", title: "Lihat proses & hasil kerja" },
   reviews: { eyebrow: "Review Customer", title: "Dipercaya pemilik rumah & bisnis" },
   advantages: { eyebrow: "Kenapa Kami", title: "Dikerjakan serius, dari survei sampai instalasi" },
@@ -94,7 +97,7 @@ function SectionLink({ s, fallback }: { s: HomeSection; fallback?: string }) {
 }
 
 export default async function HomePage() {
-  const [settings, sections, categories, products, materials, portfolio, videos, reviews, heroStats, steps, advantages, faqs] = await Promise.all([
+  const [settings, sections, categories, products, materials, portfolio, videos, reviews, heroStats, steps, advantages, faqs, clients] = await Promise.all([
     getSettings(),
     getHomeSections(),
     getCategories(),
@@ -107,6 +110,7 @@ export default async function HomePage() {
     getFeatures("process"),
     getFeatures("advantage"),
     getFaqs(),
+    getClients(),
   ]);
 
   const render: Record<HomeSectionKey, (s: HomeSection) => ReactNode> = {
@@ -250,6 +254,24 @@ export default async function HomePage() {
               </Reveal>
             ))}
           </div>
+        </>
+      );
+    },
+
+    clients: (s) => {
+      const items = clients.slice(0, s.item_limit);
+      if (!items.length) return null;
+      const h = heading(s);
+      return (
+        <>
+          <Reveal>
+            <div className="mx-auto mb-10 max-w-2xl text-center">
+              <p className="eyebrow mb-3">{h.eyebrow}</p>
+              <h2 className="section-title">{h.title}</h2>
+              {h.description && <p className="mt-4 leading-relaxed text-charcoal-700 dark:text-cream-200/80">{h.description}</p>}
+            </div>
+          </Reveal>
+          <ClientLogos clients={items} />
         </>
       );
     },

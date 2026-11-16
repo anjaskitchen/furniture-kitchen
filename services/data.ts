@@ -4,6 +4,7 @@ import { isSupabaseConfigured } from "@/lib/env";
 import { createPublicClient } from "@/lib/supabase/server";
 import * as demo from "@/lib/demo-data";
 import type {
+  Client,
   Category,
   DucoColor,
   Faq,
@@ -157,6 +158,11 @@ export const getPortfolio = cache(async (): Promise<PortfolioItem[]> =>
 
 export const getVideos = cache(async (): Promise<Video[]> =>
   fromDb((sb) => sb.from("videos").select("*").eq("is_published", true).order("sort_order"), demo.demoVideos, []),
+);
+
+/** Logo klien aktif untuk landing page. */
+export const getClients = cache(async (): Promise<Client[]> =>
+  fromDb((sb) => sb.from("clients").select("*").eq("is_active", true).order("sort_order").order("name"), [], []),
 );
 
 export const getManualReviews = cache(async (): Promise<Review[]> =>

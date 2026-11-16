@@ -248,11 +248,23 @@ export interface SiteSettings {
   about_image_2_url: string | null;
 }
 
+/** Logo klien (instansi / perusahaan) yang tampil di landing page. */
+export interface Client {
+  id: string;
+  name: string;
+  logo_url: string | null;
+  category: string;
+  website_url: string | null;
+  sort_order: number;
+  is_active: boolean;
+}
+
 export const HOME_SECTION_KEYS = [
   "categories",
   "featured_products",
   "calculator",
   "portfolio",
+  "clients",
   "videos",
   "reviews",
   "advantages",

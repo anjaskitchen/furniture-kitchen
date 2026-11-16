@@ -15,6 +15,7 @@ const PUBLIC_TABLES = [
   "products",
   "portfolio",
   "videos",
+  "clients",
   "reviews",
   "hpl_colors",
   "duco_colors",

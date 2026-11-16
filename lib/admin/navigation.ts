@@ -2,6 +2,7 @@ import {
   Banknote,
   BarChart3,
   Boxes,
+  Building2,
   CalendarCheck,
   CalendarDays,
   FileCog,
@@ -86,6 +87,7 @@ export const ADMIN_NAV: { title: string; items: AdminNavItem[] }[] = [
       { href: "/admin/products", label: "Produk", icon: Package },
       { href: "/admin/categories", label: "Kategori", icon: Tags },
       { href: "/admin/portfolio", label: "Portfolio", icon: ImageIcon },
+      { href: "/admin/clients", label: "Logo Klien", icon: Building2 },
     ],
   },
   {
