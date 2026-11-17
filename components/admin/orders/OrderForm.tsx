@@ -1,5 +1,5 @@
 "use client";
-import { ArrowLeft, FileText, Hammer, Loader2, MessageCircle, Plus, Save, Trash2, Wallet } from "lucide-react";
+import { ArrowLeft, Calculator, FileText, Hammer, Loader2, MessageCircle, Plus, Save, Trash2, Wallet } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useTransition } from "react";
@@ -59,6 +59,7 @@ export interface OrderFormValues {
   payments: OrderFormPayment[];
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 let keySeq = 0;
 export const newKey = () => `k${Date.now().toString(36)}${(keySeq++).toString(36)}`;
 const parseQty = (v: string) => {
@@ -111,11 +112,14 @@ export function OrderForm({
   categories,
   workDaysPerWeek = 6,
   paymentKinds,
+  hpp,
 }: {
   initial: OrderFormValues;
   categories: string[];
   workDaysPerWeek?: number;
   paymentKinds?: { code: string; label: string; is_active: boolean }[];
+  /** Hanya untuk admin utama: tautan ke kalkulator HPP; hasDetail = HPP dihitung dari rincian item. */
+  hpp?: { href: string; hasDetail: boolean } | null;
 }) {
   const kinds = paymentKinds?.length ? paymentKinds : PAYMENT_KINDS.map((k) => ({ code: k.value as string, label: k.label as string, is_active: true }));
   const router = useRouter();
@@ -161,6 +165,7 @@ export function OrderForm({
       const payload = {
         ...v,
         items: v.items.map((i) => ({
+          id: UUID_RE.test(i.key) ? i.key : null,
           name: i.name,
           description: i.description,
           qty: itemQty(i),
@@ -245,6 +250,11 @@ export function OrderForm({
           {!isNew && (
             <Link href={`/admin/proyek/order/${v.id}`} className="btn-outline btn-sm bg-white !py-2.5">
               <Hammer className="h-4 w-4" /> Proyek & RAB
+            </Link>
+          )}
+          {!isNew && hpp && (
+            <Link href={hpp.href} className="btn-outline btn-sm bg-white !py-2.5">
+              <Calculator className="h-4 w-4" /> HPP
             </Link>
           )}
           {!isNew && (
@@ -627,10 +637,24 @@ export function OrderForm({
                 </dd>
               </div>
               <div className="border-t border-charcoal-900/10 pt-3">
-                <label className="label !mb-1 !text-xs !font-normal !text-charcoal-700" htmlFor="o-cost">
-                  HPP / modal (opsional, untuk laba)
-                </label>
-                <MoneyInput id="o-cost" value={v.cost_estimate} onChange={(n) => set("cost_estimate", n)} />
+                {hpp?.hasDetail ? (
+                  <>
+                    <p className="label !mb-1 !text-xs !font-normal !text-charcoal-700">HPP (otomatis dari rincian per item)</p>
+                    <p className="font-semibold tabular-nums">{formatRupiah(v.cost_estimate)}</p>
+                  </>
+                ) : (
+                  <>
+                    <label className="label !mb-1 !text-xs !font-normal !text-charcoal-700" htmlFor="o-cost">
+                      HPP / modal (opsional, untuk laba)
+                    </label>
+                    <MoneyInput id="o-cost" value={v.cost_estimate} onChange={(n) => set("cost_estimate", n)} />
+                  </>
+                )}
+                {hpp && (
+                  <Link href={hpp.href} className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-wood-600 hover:underline">
+                    <Calculator className="h-3.5 w-3.5" /> {hpp.hasDetail ? "Buka rincian HPP per item" : "Hitung HPP per item"}
+                  </Link>
+                )}
               </div>
               {v.cost_estimate > 0 && (
                 <div className="flex justify-between">

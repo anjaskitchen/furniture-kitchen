@@ -1,5 +1,5 @@
 "use client";
-import { ArrowLeft, CalendarClock, ExternalLink, FileText, MapPin, MessageCircle, Pencil, Phone, Ruler, UserCog } from "lucide-react";
+import { ArrowLeft, CalendarClock, Calculator, ExternalLink, FileText, MapPin, MessageCircle, Pencil, Phone, Ruler, UserCog } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { saveProjectInfo } from "@/app/admin/erp/project-actions";
@@ -59,7 +59,7 @@ export function SpecFields({ specs, onChange }: { specs: Record<string, string>;
   );
 }
 
-export function ProjectHeader({ p, onEdit }: { p: ProjectRow; onEdit: () => void }) {
+export function ProjectHeader({ p, onEdit, showHpp = false }: { p: ProjectRow; onEdit: () => void; showHpp?: boolean }) {
   const phone = (p.customer_phone ?? "").replace(/\D/g, "").replace(/^0/, "62");
   return (
     <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -87,6 +87,11 @@ export function ProjectHeader({ p, onEdit }: { p: ProjectRow; onEdit: () => void
         <Link href={`/admin/orders/${p.order_id}`} className="btn-outline btn-sm bg-white !py-2.5">
           <ExternalLink className="h-4 w-4" /> Data order
         </Link>
+        {showHpp && (
+          <Link href={`/admin/hpp/${p.order_id}`} className="btn-outline btn-sm bg-white !py-2.5">
+            <Calculator className="h-4 w-4" /> HPP per item
+          </Link>
+        )}
         <Link href={`/admin/invoice/${p.order_id}`} target="_blank" className="btn-outline btn-sm bg-white !py-2.5">
           <FileText className="h-4 w-4" /> Invoice
         </Link>

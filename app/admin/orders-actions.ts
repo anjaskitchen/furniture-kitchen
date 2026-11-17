@@ -35,6 +35,8 @@ const dim = (label: string) =>
     .transform((v) => (v === "" || v === undefined ? null : v));
 
 const itemSchema = z.object({
+  /** Id item lama — dipertahankan agar rincian HPP item tidak hilang saat order diedit. */
+  id: z.string().uuid().optional().nullable(),
   name: z.string().trim().min(1, "Nama item wajib diisi").max(200),
   description: optionalText(500),
   qty: z.coerce.number({ message: "Qty harus angka" }).gt(0, "Qty harus lebih dari 0").max(100_000),

@@ -3,6 +3,7 @@ import {
   BarChart3,
   Boxes,
   Building2,
+  Calculator,
   CalendarCheck,
   CalendarDays,
   FileCog,
@@ -55,6 +56,7 @@ export const ADMIN_NAV: { title: string; items: AdminNavItem[] }[] = [
     items: [
       { href: "/admin/orders", label: "Order", icon: Receipt },
       { href: "/admin/reports", label: "Laporan & KPI", icon: BarChart3 },
+      { href: "/admin/hpp", label: "HPP & Margin", icon: Calculator, superAdmin: true },
       { href: "/admin/invoice-settings", label: "Pengaturan Invoice", icon: FileCog },
     ],
   },

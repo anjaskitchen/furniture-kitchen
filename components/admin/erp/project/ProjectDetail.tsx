@@ -40,7 +40,7 @@ export function ProjectDetail(props: {
   ];
   return (
     <div>
-      <ProjectHeader p={p} onEdit={() => setEditing(true)} />
+      <ProjectHeader p={p} onEdit={() => setEditing(true)} showHpp={isOwner} />
       <TabLinks base={`/admin/proyek/${p.id}`} active={tab} tabs={tabs} />
       {tab === "ringkasan" && <ProjectOverview p={p} showMoney={isOwner} onEdit={() => setEditing(true)} />}
       {tab === "material" && (
