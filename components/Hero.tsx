@@ -85,7 +85,15 @@ export function Hero({
 
         <div className="relative animate-fade-in lg:col-span-6">
           <div className="relative aspect-[4/3.4] overflow-hidden rounded-[2rem] shadow-soft ring-1 ring-charcoal-900/5 lg:ml-6 lg:aspect-[4/4.4]">
-            {video?.kind === "file" ? (
+            {video?.kind === "youtube" ? (
+              <iframe
+                src={`https://www.youtube-nocookie.com/embed/${video.id}?rel=0`}
+                title={`Video ${settings.business_name}`}
+                className="h-full w-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+                allowFullScreen
+              />
+            ) : video?.kind === "file" ? (
               <video src={video.url} autoPlay muted loop playsInline poster={settings.hero_image_url ?? undefined} className="h-full w-full object-cover" />
             ) : (
               <SmartImage

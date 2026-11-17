@@ -9,6 +9,7 @@
  */
 import type {
   Category,
+  Client,
   DucoColor,
   Faq,
   Feature,
@@ -424,3 +425,17 @@ export const demoFaqs: Faq[] = [
   ["Bagaimana sistem pembayarannya?", "Umumnya DP 50% saat desain disetujui, 40% sebelum pengiriman, dan 10% setelah instalasi selesai. Detailnya tertulis di surat penawaran."],
   ["Apakah ada garansi?", "Ya. Kami memberi garansi konstruksi dan hardware. Jika ada kendala setelah instalasi, cukup hubungi kami lewat WhatsApp."],
 ].map(([question, answer], i) => ({ id: uid("013", i + 1), question, answer, sort_order: i + 1, is_active: true }));
+
+export const demoClients: Client[] = [
+  ["Pemerintah Provinsi Jawa Barat", "pemerintah"],
+  ["Labkes Jawa Barat", "kesehatan"],
+  ["Kementerian Kelautan dan Perikanan", "pemerintah"],
+].map(([name, category], i) => ({
+  id: uid("014", i + 1),
+  name,
+  logo_url: null,
+  category,
+  website_url: null,
+  sort_order: i + 1,
+  is_active: true,
+}));

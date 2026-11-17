@@ -1,6 +1,6 @@
 import { OrderForm } from "@/components/admin/orders/OrderForm";
 import { emptyOrderForm } from "@/lib/admin/order-form";
-import { getCategorySuggestions, getPaymentKinds } from "@/lib/admin/orders-data";
+import { getCashAccountOptions, getCategorySuggestions, getPaymentKinds } from "@/lib/admin/orders-data";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata = { title: "Order baru" };
@@ -49,6 +49,10 @@ export default async function NewOrderPage({ searchParams }: { searchParams: SP 
     }
   }
 
-  const { data: st } = await sb.from("settings").select("work_days_per_week").eq("id", true).maybeSingle();
-  return <OrderForm initial={form} categories={categories} workDaysPerWeek={Number(st?.work_days_per_week ?? 6)} paymentKinds={await getPaymentKinds()} />;
+  const [{ data: st }, kinds, cashAccounts] = await Promise.all([
+    sb.from("settings").select("work_days_per_week").eq("id", true).maybeSingle(),
+    getPaymentKinds(),
+    getCashAccountOptions(),
+  ]);
+  return <OrderForm initial={form} categories={categories} workDaysPerWeek={Number(st?.work_days_per_week ?? 6)} paymentKinds={kinds} cashAccounts={cashAccounts} />;
 }

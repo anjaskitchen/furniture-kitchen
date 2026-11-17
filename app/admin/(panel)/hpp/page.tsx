@@ -1,4 +1,4 @@
-import { AlertTriangle, Calculator, Coins, Percent, TrendingUp } from "lucide-react";
+import { AlertTriangle, Calculator, Coins, FileSpreadsheet, Percent, TrendingUp } from "lucide-react";
 import Link from "next/link";
 import { AdminHeader } from "@/components/admin/AdminHeader";
 import { OwnerOnly } from "@/components/admin/erp/OwnerOnly";
@@ -111,12 +111,18 @@ export default async function HppDashboardPage({ searchParams }: { searchParams:
     if (b === "aktual") p.set("basis", "aktual");
     return `/admin/hpp?${p.toString()}`;
   };
+  const exportHref = qs(basis).replace("/admin/hpp?", "/admin/hpp/export?");
 
   return (
     <>
       <AdminHeader
         title="HPP & Margin"
         description="Harga pokok tiap barang yang dipesan, dihitung dari order masuk: bahan baku, tenaga kerja, dan overhead. Persentase HPP = HPP ÷ harga jual."
+        action={
+          <a href={exportHref} className="btn-outline btn-sm bg-white !py-2.5">
+            <FileSpreadsheet className="h-4 w-4" /> Export Excel
+          </a>
+        }
       />
 
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

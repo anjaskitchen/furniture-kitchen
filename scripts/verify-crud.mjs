@@ -59,6 +59,8 @@ const CASES = {
   reviews: [{ author_name: "Uji", content: tag }, { rating: 4 }],
   features: [{ section: "advantage", title: `Uji ${tag}` }, { description: "diubah" }],
   faqs: [{ question: `Uji ${tag}?`, answer: "Jawaban" }, { answer: "Jawaban baru" }],
+  clients: [{ name: `Instansi ${tag}`, category: "pemerintah" }, { category: "bumn" }],
+  invoice_bank_accounts: [{ bank_name: "BCA", account_number: "1234567890", account_holder: `Uji ${tag}` }, { bank_name: "Mandiri" }],
 };
 
 let userId = null;
@@ -158,6 +160,45 @@ try {
       const { data: anonOrders } = await anon.from("orders").select("id").limit(1);
       const { error: anonRpc } = await anon.rpc("order_report", { p_from: day, p_to: day });
       check(!anonOrders?.length && Boolean(anonRpc), "orders: data penjualan tertutup untuk publik");
+      // Pastikan edit order mempertahankan ID pembayaran lama (tidak hapus-buat ulang buku kas)
+      const { data: payBefore } = await admin.from("order_payments").select("id").eq("order_id", oid).single();
+      if (payBefore?.id) {
+        const { error: ue2 } = await admin.rpc("save_order", {
+          p: {
+            id: oid,
+            order_date: day,
+            customer_name: `Uji ${tag}`,
+            title: "Order uji diedit",
+            category: `Kategori ${tag}`,
+            source: "website",
+            status: "production",
+            discount: 100000,
+            additional_fee: 50000,
+            cost_estimate: 3000000,
+            items: [
+              { name: "Item A", qty: 2.5, unit: "meter", unit_price: 1200000 },
+              { name: "Item B", qty: 1, unit: "unit", unit_price: 800000 },
+            ],
+            payments: [{ id: payBefore.id, paid_at: day, amount: 1500000, method: "transfer", kind: "dp" }],
+          },
+        });
+        const { data: payAfter } = await admin.from("order_payments").select("id").eq("order_id", oid).single();
+        check(!ue2 && payAfter?.id === payBefore.id, "orders: edit order mempertahankan ID pembayaran");
+      }
+      // RLS HPP: editor tidak boleh menulis order_item_costs (khusus admin utama)
+      const { data: firstItem } = await admin.from("order_items").select("id").eq("order_id", oid).limit(1).single();
+      if (firstItem?.id) {
+        const { error: hppEditorErr } = await admin.from("order_item_costs").insert({
+          order_item_id: firstItem.id,
+          order_id: oid,
+          category: "material",
+          name: "Uji HPP",
+          qty: 1,
+          unit: "pcs",
+          unit_cost: 100000,
+        });
+        check(Boolean(hppEditorErr), "order_item_costs: editor ditolak RLS (khusus admin utama)");
+      }
       const { error: de2 } = await admin.from("orders").delete().eq("id", oid);
       const { data: items } = await service.from("order_items").select("id").eq("order_id", oid);
       check(!de2 && items?.length === 0, "orders: hapus order ikut menghapus item", de2?.message);

@@ -47,12 +47,18 @@ const itemSchema = z.object({
 });
 
 const paymentSchema = z.object({
+  /** Id pembayaran lama — dipertahankan agar baris buku kas & nomor transaksi tidak di-reset saat order diedit. */
+  id: z.string().uuid().optional().nullable(),
   paid_at: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Tanggal bayar tidak valid"),
   amount: money("Jumlah bayar").refine((n) => n > 0, "Jumlah bayar harus lebih dari 0"),
   method: z.enum(values(PAYMENT_METHODS)),
   kind: z.string().regex(/^[a-z][a-z0-9_]{0,39}$/, "Jenis pembayaran tidak valid"),
   reference: optionalText(100),
   note: optionalText(300),
+  account_id: z
+    .union([z.literal(""), z.null(), z.undefined(), z.string().uuid("Akun kas tidak valid")])
+    .optional()
+    .transform((v) => (v === undefined ? undefined : v || null)),
 });
 
 const orderSchema = z
@@ -200,7 +206,16 @@ export async function quickUpdateOrder(input: unknown): Promise<ActionResult> {
     const { error } = await sb.from("orders").update({ status: d.status, completed_at: completed }).eq("id", d.id);
     if (error) throw new Error(error.message);
     if (d.payment) {
-      const { error: pe } = await sb.from("order_payments").insert({ ...d.payment, order_id: d.id });
+      const { error: pe } = await sb.from("order_payments").insert({
+        order_id: d.id,
+        paid_at: d.payment.paid_at,
+        amount: d.payment.amount,
+        method: d.payment.method,
+        kind: d.payment.kind,
+        reference: d.payment.reference,
+        note: d.payment.note,
+        account_id: d.payment.account_id ?? null,
+      });
       if (pe) throw new Error(pe.message);
     }
     revalidateOrders(d.id);

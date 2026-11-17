@@ -2,11 +2,11 @@
 -- Dijalankan sekali oleh npm run db:seed setelah migrasi (supabase/migrations).
 -- Aman dijalankan ulang (on conflict do nothing).
 
-insert into public.settings (id, business_name, tagline, description, logo_url, address, city, whatsapp_number, email, notification_email, instagram_url, facebook_url, tiktok_url, youtube_url, google_maps_url, google_maps_embed_query, google_place_id, opening_hours, hero_title, hero_subtitle, hero_image_url, hero_video_url, cta_primary_label, cta_secondary_label, footer_text, about_title, about_content, manual_rating, manual_review_count, whatsapp_default_message, announcement_text, announcement_url, hero_card_title, hero_card_text, cta_eyebrow, cta_title, cta_text, about_image_url, about_image_2_url) values
+insert into public.settings (id, business_name, tagline, description, logo_url, address, city, whatsapp_number, email, notification_email, instagram_url, facebook_url, tiktok_url, youtube_url, google_maps_url, google_maps_embed_query, google_place_id, opening_hours, hero_title, hero_subtitle, hero_image_url, hero_video_url, cta_primary_label, cta_secondary_label, footer_text, about_title, about_content, manual_rating, manual_review_count, whatsapp_default_message, brand_title, brand_subtitle, announcement_text, announcement_url, hero_card_title, hero_card_text, cta_eyebrow, cta_title, cta_text, about_image_url, about_image_2_url) values
   (true, 'Kayuna Interior', 'Custom Furniture & Kitchen Set Bandung', 'Workshop custom furniture dan kitchen set di Bandung. Desain modern, material berkualitas, dan harga transparan sejak hari pertama konsultasi.', null, 'Jl. Contoh Raya No. 123, Bandung, Jawa Barat', 'Bandung', '6281234567890', 'halo@contoh-furniture.com', 'admin@contoh-furniture.com', 'https://instagram.com/', 'https://facebook.com/', 'https://tiktok.com/', 'https://youtube.com/', 'https://maps.app.goo.gl/hbrsjzTrYgMLddL39', 'Bandung, Jawa Barat', null, 'Senin – Sabtu, 08.00 – 17.00 WIB', 'Custom Furniture & Kitchen Set
 Sesuai Ruang, Sesuai Gaya Anda.', 'Kitchen set dan furniture custom dengan desain modern, material berkualitas, dan harga transparan.', '/placeholders/island-1.svg', null, 'Hitung Harga', 'Lihat Katalog', 'Custom furniture & kitchen set premium untuk rumah, apartemen, dan ruang komersial.', 'Dirancang presisi, dibuat dengan tangan berpengalaman.', 'Kami adalah workshop custom furniture yang berfokus pada kitchen set, wardrobe, dan interior built-in. Setiap proyek dimulai dari survei dan pengukuran, dilanjutkan desain 3D, produksi di workshop sendiri, hingga instalasi rapi di lokasi.
 
-Kami percaya furniture yang baik itu jujur: material jelas, harga transparan, dan hasil yang awet bertahun-tahun.', 4.9, 5, 'Halo, saya ingin konsultasi custom furniture.', null, null, 'Harga transparan per meter', 'Mulai dari', 'Konsultasi Gratis', 'Siap mewujudkan ruang impian Anda?', 'Ceritakan kebutuhan Anda. Tim kami membantu dari desain, pemilihan material, hingga estimasi biaya.', '/placeholders/wardrobe-2.svg', '/placeholders/kitchen-4.svg')
+Kami percaya furniture yang baik itu jujur: material jelas, harga transparan, dan hasil yang awet bertahun-tahun.', 4.9, 5, 'Halo, saya ingin konsultasi custom furniture.', 'Kitchen Set Custom', 'Bandung', null, null, 'Harga transparan per meter', 'Mulai dari', 'Konsultasi Gratis', 'Siap mewujudkan ruang impian Anda?', 'Ceritakan kebutuhan Anda. Tim kami membantu dari desain, pemilihan material, hingga estimasi biaya.', '/placeholders/wardrobe-2.svg', '/placeholders/kitchen-4.svg')
 on conflict do nothing;
 
 insert into public.categories (id, name, slug, description, image_url, show_on_home, sort_order, is_active) values
@@ -138,11 +138,12 @@ insert into public.home_sections (id, key, eyebrow, title, description, cta_labe
   ('00000000-0000-4000-8011-000000000002', 'featured_products', 'Katalog', 'Produk pilihan', 'Desain favorit customer kami. Semua ukuran dan warna bisa disesuaikan.', 'Lihat Katalog', '/katalog', 8, 2, true),
   ('00000000-0000-4000-8011-000000000003', 'calculator', 'Harga Transparan', 'Hitung estimasi biaya dalam 1 menit', 'Pilih jenis furniture, material, ukuran, dan opsi tambahan. Kalkulator kami langsung menampilkan rincian biaya — tanpa perlu menunggu penawaran.', 'Hitung Estimasi Harga', '/kalkulator', 3, 3, true),
   ('00000000-0000-4000-8011-000000000004', 'portfolio', 'Portfolio', 'Hasil pekerjaan kami', null, 'Lihat Portfolio', '/portfolio', 6, 4, true),
-  ('00000000-0000-4000-8011-000000000005', 'videos', 'Video', 'Lihat proses & hasil kerja', null, 'Semua Video', '/video', 2, 5, true),
-  ('00000000-0000-4000-8011-000000000006', 'reviews', 'Review Customer', 'Apa kata customer kami', null, 'Lihat Semua Review', '/review', 6, 6, true),
-  ('00000000-0000-4000-8011-000000000007', 'advantages', 'Kenapa Kami', 'Dikerjakan serius, dari survei sampai instalasi', null, null, null, 6, 7, true),
-  ('00000000-0000-4000-8011-000000000008', 'faq', 'FAQ', 'Pertanyaan yang sering diajukan', 'Belum menemukan jawaban? Tanyakan langsung lewat WhatsApp.', 'Tanya via WhatsApp', null, 8, 8, true),
-  ('00000000-0000-4000-8011-000000000009', 'cta', null, null, null, null, null, 1, 9, true)
+  ('00000000-0000-4000-8011-000000000005', 'clients', 'Klien Kami', 'Dipercaya instansi pemerintah & perusahaan', null, null, null, 24, 5, true),
+  ('00000000-0000-4000-8011-000000000006', 'videos', 'Video', 'Lihat proses & hasil kerja', null, 'Semua Video', '/video', 2, 6, true),
+  ('00000000-0000-4000-8011-000000000007', 'reviews', 'Review Customer', 'Apa kata customer kami', null, 'Lihat Semua Review', '/review', 6, 7, true),
+  ('00000000-0000-4000-8011-000000000008', 'advantages', 'Kenapa Kami', 'Dikerjakan serius, dari survei sampai instalasi', null, null, null, 6, 8, true),
+  ('00000000-0000-4000-8011-000000000009', 'faq', 'FAQ', 'Pertanyaan yang sering diajukan', 'Belum menemukan jawaban? Tanyakan langsung lewat WhatsApp.', 'Tanya via WhatsApp', null, 8, 9, true),
+  ('00000000-0000-4000-8011-000000000010', 'cta', null, null, null, null, null, 1, 10, true)
 on conflict do nothing;
 
 insert into public.features (id, section, icon, title, description, value, sort_order, is_active) values
@@ -169,5 +170,11 @@ insert into public.faqs (id, question, answer, sort_order, is_active) values
   ('00000000-0000-4000-8013-000000000004', 'Apakah harga di kalkulator sudah final?', 'Kalkulator memberi estimasi berdasarkan harga per meter terbaru. Harga final ditentukan setelah survey, karena ukuran detail, kondisi dinding, dan pilihan aksesoris bisa memengaruhi biaya.', 4, true),
   ('00000000-0000-4000-8013-000000000005', 'Bagaimana sistem pembayarannya?', 'Umumnya DP 50% saat desain disetujui, 40% sebelum pengiriman, dan 10% setelah instalasi selesai. Detailnya tertulis di surat penawaran.', 5, true),
   ('00000000-0000-4000-8013-000000000006', 'Apakah ada garansi?', 'Ya. Kami memberi garansi konstruksi dan hardware. Jika ada kendala setelah instalasi, cukup hubungi kami lewat WhatsApp.', 6, true)
+on conflict do nothing;
+
+insert into public.clients (id, name, logo_url, category, website_url, sort_order, is_active) values
+  ('00000000-0000-4000-8014-000000000001', 'Pemerintah Provinsi Jawa Barat', null, 'pemerintah', null, 1, true),
+  ('00000000-0000-4000-8014-000000000002', 'Labkes Jawa Barat', null, 'kesehatan', null, 2, true),
+  ('00000000-0000-4000-8014-000000000003', 'Kementerian Kelautan dan Perikanan', null, 'pemerintah', null, 3, true)
 on conflict do nothing;
 

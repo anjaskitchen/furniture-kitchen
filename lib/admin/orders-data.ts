@@ -61,6 +61,14 @@ export interface OrderPaymentRow {
   kind: string;
   reference: string | null;
   note: string | null;
+  account_id: string | null;
+}
+
+export interface CashAccountOption {
+  id: string;
+  name: string;
+  kind: "cash" | "bank" | "ewallet";
+  is_default: boolean;
 }
 
 const NUMERIC = ["subtotal", "discount", "additional_fee", "total", "cost_estimate", "paid_amount", "balance", "gross_profit", "items_count", "qty", "unit_price", "line_total", "amount", "length_m", "height_m", "work_duration"];
@@ -173,4 +181,11 @@ export async function getPaymentKinds(): Promise<PaymentKind[]> {
   const sb = await createClient();
   const { data } = await sb.from("payment_kinds").select("code, label, sort_order, is_active, is_system").order("sort_order").order("label");
   return (data ?? []) as PaymentKind[];
+}
+
+/** Pilihan akun kas aktif untuk pembayaran order (khusus admin utama sesuai RLS; editor menerima array kosong). */
+export async function getCashAccountOptions(): Promise<CashAccountOption[]> {
+  const sb = await createClient();
+  const { data } = await sb.from("cash_accounts").select("id, name, kind, is_default").eq("is_active", true).order("is_default", { ascending: false }).order("name");
+  return (data ?? []) as CashAccountOption[];
 }

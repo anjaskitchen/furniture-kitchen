@@ -1,10 +1,10 @@
 "use client";
-import { ArrowDown, ArrowUp, Eye, EyeOff, Loader2, Plus, Search } from "lucide-react";
+import { ArrowDown, ArrowUp, Eye, EyeOff, Loader2, Plus, Search, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 import { deleteRecord, reorderRecords, saveRecord, toggleRecord } from "@/app/admin/actions";
 import { RESOURCES, type FieldDef } from "@/lib/admin/resources";
-import { cn } from "@/lib/utils";
+import { cn, parseVideoUrl } from "@/lib/utils";
 import { useToast } from "../Toast";
 import { AdminModal } from "./AdminModal";
 import { AdminTable } from "./AdminTable";
@@ -81,9 +81,44 @@ function Field({ f, value, onChange, error, options }: { f: FieldDef; value: unk
     case "image":
       input = <ImageUploader folder={f.folder} value={value ? [String(value)] : []} onChange={(u) => onChange(u[0] ?? "")} />;
       break;
-    case "video":
-      input = <ImageUploader accept="video" folder={f.folder} value={value ? [String(value)] : []} onChange={(u) => onChange(u[0] ?? "")} />;
+    case "video": {
+      const strVal = String(value ?? "");
+      const yt = parseVideoUrl(strVal);
+      const validYt = yt?.kind === "youtube" ? yt : null;
+      input = (
+        <div className="space-y-2">
+          <div className="flex gap-2">
+            <input
+              id={id}
+              type="url"
+              inputMode="url"
+              className="input"
+              value={strVal}
+              placeholder={f.placeholder ?? "https://www.youtube.com/watch?v=… atau https://youtu.be/…"}
+              onChange={(e) => onChange(e.target.value)}
+            />
+            {strVal && (
+              <button type="button" onClick={() => onChange("")} className="btn-outline btn-sm shrink-0" aria-label="Hapus link video" title="Hapus link">
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+          {validYt && (
+            <div className="relative aspect-video max-w-md overflow-hidden rounded-xl bg-charcoal-900">
+              <iframe
+                src={`https://www.youtube-nocookie.com/embed/${validYt.id}?rel=0`}
+                title="Pratinjau video YouTube"
+                className="absolute inset-0 h-full w-full"
+                allow="accelerometer; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+          )}
+          {strVal && !validYt && <p className="text-xs text-red-600">Link belum dikenali sebagai video YouTube.</p>}
+        </div>
+      );
       break;
+    }
     case "tags":
       input = (
         <input

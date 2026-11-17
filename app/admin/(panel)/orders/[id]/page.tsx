@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { OrderForm } from "@/components/admin/orders/OrderForm";
 import { getCurrentUser } from "@/lib/admin/auth";
 import { orderToForm } from "@/lib/admin/order-form";
-import { getCategorySuggestions, getPaymentKinds, getOrder } from "@/lib/admin/orders-data";
+import { getCashAccountOptions, getCategorySuggestions, getPaymentKinds, getOrder } from "@/lib/admin/orders-data";
 import { createClient } from "@/lib/supabase/server";
 
 type Params = Promise<{ id: string }>;
@@ -17,11 +17,13 @@ export default async function OrderDetailPage({ params }: { params: Params }) {
   const { id } = await params;
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
   const sb = await createClient();
-  const [data, categories, st, user] = await Promise.all([
+  const [data, categories, st, user, kinds, cashAccounts] = await Promise.all([
     getOrder(id),
     getCategorySuggestions(),
     sb.from("settings").select("work_days_per_week").eq("id", true).maybeSingle(),
     getCurrentUser(),
+    getPaymentKinds(),
+    getCashAccountOptions(),
   ]);
   if (!data) notFound();
   // Rincian HPP hanya untuk admin utama (RLS).
@@ -37,7 +39,8 @@ export default async function OrderDetailPage({ params }: { params: Params }) {
       initial={orderToForm(data.order, data.items, data.payments)}
       categories={categories}
       workDaysPerWeek={Number(st.data?.work_days_per_week ?? 6)}
-      paymentKinds={await getPaymentKinds()}
+      paymentKinds={kinds}
+      cashAccounts={cashAccounts}
       hpp={hpp}
     />
   );

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { slugify } from "@/lib/utils";
+import { parseVideoUrl, slugify } from "@/lib/utils";
 import type { FieldDef } from "./resources";
 
 const urlOrPath = z
@@ -7,6 +7,12 @@ const urlOrPath = z
   .trim()
   .max(2000)
   .refine((v) => v === "" || v.startsWith("/") || /^https?:\/\//.test(v), "URL harus diawali https:// atau /");
+
+const youtubeUrl = z
+  .string()
+  .trim()
+  .max(500)
+  .refine((v) => v === "" || parseVideoUrl(v)?.kind === "youtube", "Masukkan link YouTube yang valid (contoh: https://www.youtube.com/watch?v=... atau https://youtu.be/...)");
 
 /** Bangun validator Zod dari definisi field admin. */
 export function buildSchema(fields: FieldDef[]) {
@@ -34,9 +40,11 @@ export function buildSchema(fields: FieldDef[]) {
         s = z.array(z.string().trim().max(60)).max(30);
         break;
       case "image":
-      case "video":
       case "url":
         s = f.required ? urlOrPath.refine((v) => v !== "", `${f.label} wajib diisi`) : urlOrPath.transform((v) => v || null).nullable();
+        break;
+      case "video":
+        s = f.required ? youtubeUrl.refine((v) => v !== "", `${f.label} wajib diisi`) : youtubeUrl.transform((v) => v || null).nullable();
         break;
       case "date":
         s = z

@@ -10,31 +10,35 @@ import { jakartaToday, ORDER_STATUSES, PAYMENT_METHODS } from "@/lib/orders";
 import { cn } from "@/lib/utils";
 
 type Kind = { code: string; label: string; is_active: boolean };
+type CashAccount = { id: string; name: string; kind: string; is_default: boolean };
 
 /** Tombol "Update" di daftar order: ubah proses/status & catat pembayaran baru dengan cepat. */
 export function OrderQuickUpdate({
   order,
   kinds,
+  cashAccounts,
   compact,
 }: {
   order: { id: string; order_number: string; customer_name: string; title: string; status: string; total: number; paid_amount: number; balance: number; completed_at: string | null };
   kinds: Kind[];
+  cashAccounts?: CashAccount[];
   compact?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState(order.status);
   const [completedAt, setCompletedAt] = useState(order.completed_at ?? jakartaToday());
   const [withPay, setWithPay] = useState(false);
-  const [pay, setPay] = useState({ paid_at: jakartaToday(), amount: order.balance, kind: "pelunasan", method: "transfer", reference: "", note: "" });
+  const [pay, setPay] = useState({ paid_at: jakartaToday(), amount: order.balance, kind: "pelunasan", method: "transfer", reference: "", note: "", account_id: "" });
   const { run, pending, errors } = useAction();
   const active = kinds.filter((k) => k.is_active);
+  const accounts = cashAccounts ?? [];
 
   const start = () => {
     setStatus(order.status);
     setCompletedAt(order.completed_at ?? jakartaToday());
     setWithPay(false);
     const firstKind = order.paid_amount <= 0 ? "dp" : "pelunasan";
-    setPay({ paid_at: jakartaToday(), amount: order.balance, kind: active.some((k) => k.code === firstKind) ? firstKind : (active[0]?.code ?? "other"), method: "transfer", reference: "", note: "" });
+    setPay({ paid_at: jakartaToday(), amount: order.balance, kind: active.some((k) => k.code === firstKind) ? firstKind : (active[0]?.code ?? "other"), method: "transfer", reference: "", note: "", account_id: "" });
     setOpen(true);
   };
 
@@ -130,6 +134,18 @@ export function OrderQuickUpdate({
                       ))}
                     </select>
                   </Field>
+                  {accounts.length > 0 && (
+                    <Field label="Masuk ke akun kas" className="sm:col-span-2">
+                      <select className="input" value={pay.account_id} onChange={(e) => setPay({ ...pay, account_id: e.target.value })}>
+                        <option value="">Otomatis (sesuai metode bayar)</option>
+                        {accounts.map((a) => (
+                          <option key={a.id} value={a.id}>
+                            {a.name}
+                          </option>
+                        ))}
+                      </select>
+                    </Field>
+                  )}
                   <Field label="No. referensi / bukti" className="sm:col-span-2">
                     <input className="input" value={pay.reference} onChange={(e) => setPay({ ...pay, reference: e.target.value })} />
                   </Field>

@@ -162,7 +162,7 @@ export const getVideos = cache(async (): Promise<Video[]> =>
 
 /** Logo klien aktif untuk landing page. */
 export const getClients = cache(async (): Promise<Client[]> =>
-  fromDb((sb) => sb.from("clients").select("*").eq("is_active", true).order("sort_order").order("name"), [], []),
+  fromDb((sb) => sb.from("clients").select("*").eq("is_active", true).order("sort_order").order("name"), demo.demoClients, []),
 );
 
 export const getManualReviews = cache(async (): Promise<Review[]> =>

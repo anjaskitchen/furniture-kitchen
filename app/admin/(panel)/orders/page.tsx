@@ -5,7 +5,7 @@ import { OrderFilters } from "@/components/admin/orders/OrderFilters";
 import { PeriodPicker } from "@/components/admin/orders/PeriodPicker";
 import { Delta, KpiCard, PaymentBadge, StatusBadge } from "@/components/admin/orders/ui";
 import { OrderQuickUpdate } from "@/components/admin/orders/OrderQuickUpdate";
-import { getOrderReport, getPaymentKinds, listOrders, PAGE_SIZE } from "@/lib/admin/orders-data";
+import { getCashAccountOptions, getOrderReport, getPaymentKinds, listOrders, PAGE_SIZE } from "@/lib/admin/orders-data";
 import { formatRupiah } from "@/lib/format";
 import { formatCompactRupiah, formatDateShort, jakartaToday, periodLabel, resolvePeriod } from "@/lib/orders";
 import { cn } from "@/lib/utils";
@@ -19,10 +19,11 @@ export default async function OrdersPage({ searchParams }: { searchParams: SP })
   const period = resolvePeriod(sp);
   const str = (k: string) => (typeof sp[k] === "string" ? (sp[k] as string) : undefined);
   const page = Math.max(1, Number(str("page")) || 1);
-  const [{ rows, count }, report, kinds] = await Promise.all([
+  const [{ rows, count }, report, kinds, cashAccounts] = await Promise.all([
     listOrders({ from: period.from, to: period.to, q: str("q"), status: str("status"), payment: str("payment"), sort: str("sort"), page }),
     getOrderReport(period.from, period.to),
     getPaymentKinds(),
+    getCashAccountOptions(),
   ]);
   const pages = Math.max(1, Math.ceil(count / PAGE_SIZE));
   const periodQs = period.preset === "custom" ? `from=${period.from}&to=${period.to}` : `preset=${period.preset}`;
@@ -128,7 +129,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: SP })
                   </div>
                 </Link>
                 <div className="flex justify-end border-t border-charcoal-900/5 px-4 py-2.5">
-                  <OrderQuickUpdate order={o} kinds={kinds} compact />
+                  <OrderQuickUpdate order={o} kinds={kinds} cashAccounts={cashAccounts} compact />
                 </div>
               </li>
             ))}
@@ -178,7 +179,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: SP })
                         <PaymentBadge status={o.payment_status} />
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <OrderQuickUpdate order={o} kinds={kinds} />
+                        <OrderQuickUpdate order={o} kinds={kinds} cashAccounts={cashAccounts} />
                       </td>
                     </tr>
                   );

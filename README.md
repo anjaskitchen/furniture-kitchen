@@ -105,7 +105,8 @@ File: [`supabase/migrations/`](supabase/migrations) (dijalankan berurutan oleh `
 | `hardware` | Hardware + harga per meter/fixed | — |
 | `price_settings` | Jenis produk (pengali + tinggi standar), finishing (%), top table (Rp/m), aksesoris (Rp/unit), biaya tambahan | — |
 | `portfolio` | Project (admin / customer) | `submission_id` → customer_submissions |
-| `videos` | Video YouTube/Vimeo/upload | — |
+| `clients` | Logo klien (instansi pemerintah, BUMN, swasta, dll.) untuk landing page | — |
+| `videos` | Video YouTube (judul, kategori, urutan, status tampil) | — |
 | `customer_submissions` | Kiriman customer (pending/approved/rejected) | — |
 | `reviews` | Review manual / testimoni approved | `submission_id` → customer_submissions |
 | `survey_requests` | Request survey | — |
@@ -115,9 +116,10 @@ File: [`supabase/migrations/`](supabase/migrations) (dijalankan berurutan oleh `
 | `features` | Poin konten: statistik hero, proses kerja, keunggulan, nilai Tentang Kami (ikon + judul + deskripsi) | — |
 | `faqs` | FAQ homepage (+ structured data FAQPage) | — |
 | `orders` | Order penjualan: nomor otomatis `ORD-YYMM-0001`, customer, project, status, diskon, biaya tambahan, HPP, total & dibayar (dihitung trigger) | `survey_request_id` / `contact_message_id` → lead asal |
-| `order_items` | Item pekerjaan (qty × harga satuan) | `order_id` → orders (cascade) |
-| `order_payments` | DP / termin / pelunasan (tanggal, metode, referensi) | `order_id` → orders (cascade) |
-| `orders_view` | View ringkasan: sisa tagihan, status bayar, laba kotor | — |
+| `order_items` | Item pekerjaan (qty × harga satuan, opsional ukuran `P × T`) | `order_id` → orders (cascade) |
+| `order_item_costs` | Rincian HPP per item order (bahan baku, tenaga kerja, overhead, lainnya) | `order_item_id` → order_items (cascade) |
+| `order_payments` | DP / termin / pelunasan (tanggal, metode, akun kas tujuan, referensi) | `order_id` → orders (cascade) |
+| `orders_view`, `order_hpp`, `order_item_hpp` | View ringkasan: sisa tagihan, status bayar, HPP estimasi vs aktual, laba kotor | — |
 
 **Row Level Security (aktif di semua tabel):**
 - Publik (anon) hanya bisa **membaca** baris yang aktif/published + settings.
@@ -253,7 +255,8 @@ Section yang datanya kosong (mis. belum ada video) otomatis disembunyikan, dan l
 
 Menu **Penjualan** di admin:
 
-- **Order** — catat order lengkap: customer, project, kategori, sumber order (WhatsApp, website, IG, referensi, dll.), status (*Penawaran → Deal → Produksi → Instalasi → Selesai / Batal*), item pekerjaan (qty desimal mis. `3,5` meter), diskon, biaya tambahan, HPP, dan pembayaran (DP/termin/pelunasan; tombol *Isi sisa tagihan*). Total, sisa tagihan, status bayar & laba kotor dihitung otomatis. Tersedia filter periode/status/pembayaran, pencarian, urutan, tombol WhatsApp ke customer, dan **Invoice** siap cetak/PDF.
+- **Order** — catat order lengkap: customer, project, kategori, sumber order (WhatsApp, website, IG, referensi, dll.), status (*Penawaran → Deal → Produksi → Instalasi → Selesai / Batal*), item pekerjaan (qty desimal mis. `3,5` meter atau ukuran `P × T`), diskon, biaya tambahan, HPP, dan pembayaran (DP/termin/pelunasan; pilihan **akun kas tujuan**; tombol *Isi sisa tagihan*). Total, sisa tagihan, status bayar & laba kotor dihitung otomatis. Tersedia filter periode/status/pembayaran, pencarian, urutan, tombol WhatsApp ke customer, dan **Invoice** siap cetak/PDF (+ link publik konsumen).
+- **HPP & Margin** — rincian Harga Pokok Penjualan per item order (bahan baku, tenaga kerja, overhead manual & otomatis), isi otomatis dari Template Material atau RAB Proyek, perbandingan HPP Estimasi vs Aktual proyek, serta **Export Excel HPP**.
 - **Buat order dari lead** — buka Request Survey / Pesan Kontak → *Buat order dari lead ini* (data customer & estimasi terisi otomatis).
 - **Laporan & KPI** — periode *Hari ini, 7/30 hari, Bulan ini, Bulan lalu, Kuartal, Tahun ini, Tahun lalu* atau rentang tanggal bebas, dibandingkan otomatis dengan periode sebelumnya: omset, kas masuk, laba kotor & margin, jumlah order, rata-rata nilai order, piutang & jatuh tempo, order selesai, rasio order/leads, **target omset** (pro-rata per hari, khusus admin mengatur), grafik tren, omset per kategori & sumber, status, order berjalan, dan top customer.
 - **Export Excel** — file `.xlsx` lengkap: *Ringkasan* (KPI dengan rumus perubahan, target, piutang, pipeline, rincian, top customer + **3 grafik Excel native**), *Tren* (+ grafik), *Order* (autofilter, total `SUBTOTAL` yang ikut filter), *Item*, *Pembayaran*, *Piutang* (hari terlambat).
@@ -302,9 +305,10 @@ Tombol mata = aktifkan/nonaktifkan. Setelah disimpan, halaman kalkulator di-reva
 
 ## 8. Cara upload katalog
 
-- **Produk:** Admin → Produk → *Tambah Produk*. Tarik banyak foto sekaligus ke area upload (foto pertama = cover, urutan bisa digeser), tambah video (upload MP4/WebM atau tempel URL YouTube/Vimeo), pilih kategori, material, status *Published/Draft*.
-- **Portfolio:** Admin → Portfolio → *Tambah Project* (foto, video, lokasi, tahun, material). Toggle publish/unpublish.
-- **Video:** Admin → Video. YouTube/Vimeo otomatis memakai thumbnail resmi; file upload sebaiknya diberi thumbnail.
+- **Produk:** Admin → Produk → *Tambah Produk*. Tarik banyak foto sekaligus ke area upload (foto pertama = cover, urutan bisa digeser), tempel link video YouTube (opsional), pilih kategori, material, status *Published/Draft*.
+- **Portfolio:** Admin → Portfolio → *Tambah Project* (foto, link video YouTube, lokasi, tahun, material). Toggle publish/unpublish.
+- **Logo Klien:** Admin → Logo Klien. Unggah logo PNG/SVG transparan instansi/perusahaan; otomatis bergerak (marquee) di landing page.
+- **Video YouTube:** Admin → Video YouTube. Tempel link YouTube (video biasa atau Shorts) — judul & thumbnail diambil otomatis, hemat kuota storage Supabase & bandwidth Vercel.
 - **Warna HPL / Cat Duco:** Admin → HPL / Cat Duco (nama, kode, brand, kategori, warna dasar, foto sampel).
 - **Customer submission:** Admin → Customer Submission → Approve / Reject / Edit.
 - **Gambar placeholder** (`/placeholders/*.svg`) cukup diganti dengan upload foto asli lewat admin; foto hero & logo di Admin → Pengaturan Website.

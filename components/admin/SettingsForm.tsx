@@ -1,8 +1,9 @@
 "use client";
-import { Loader2, Save } from "lucide-react";
+import { Loader2, Save, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { saveSettings } from "@/app/admin/actions";
+import { parseVideoUrl } from "@/lib/utils";
 import type { SiteSettings } from "@/types";
 import { useToast } from "../Toast";
 import { ImageUploader } from "./ImageUploader";
@@ -51,7 +52,7 @@ const SECTIONS: { title: string; fields: FieldSpec[] }[] = [
       { key: "hero_title", label: "Hero headline (baris ke-2 setelah Enter)", type: "textarea", full: true },
       { key: "hero_subtitle", label: "Hero subheadline", type: "textarea", full: true },
       { key: "hero_image_url", label: "Hero image", type: "image", full: true },
-      { key: "hero_video_url", label: "Hero video (opsional, file MP4)", type: "video", full: true },
+      { key: "hero_video_url", label: "Hero video YouTube (opsional)", type: "video", full: true, help: "Tempel link YouTube jika ingin menampilkan video di area Hero tanpa membebani kuota storage/bandwidth." },
       { key: "cta_primary_label", label: "Label CTA utama" },
       { key: "cta_secondary_label", label: "Label CTA kedua" },
       { key: "hero_card_text", label: "Kartu hero — teks kecil", help: "Kartu kecil di pojok gambar hero. Kosongkan judul untuk menyembunyikan." },
@@ -125,8 +126,41 @@ export function SettingsForm({ initial }: { initial: SiteSettings }) {
                 <label htmlFor={`s-${f.key}`} className="label">{f.label}</label>
                 {f.type === "textarea" ? (
                   <textarea id={`s-${f.key}`} rows={3} className="input" value={String(values[f.key] ?? "")} onChange={(e) => set(f.key, e.target.value)} />
-                ) : f.type === "image" || f.type === "video" ? (
-                  <ImageUploader accept={f.type} folder="settings" value={values[f.key] ? [String(values[f.key])] : []} onChange={(u) => set(f.key, u[0] ?? "")} />
+                ) : f.type === "image" ? (
+                  <ImageUploader accept="image" folder="settings" value={values[f.key] ? [String(values[f.key])] : []} onChange={(u) => set(f.key, u[0] ?? "")} />
+                ) : f.type === "video" ? (
+                  <div className="space-y-2">
+                    <div className="flex gap-2">
+                      <input
+                        id={`s-${f.key}`}
+                        type="url"
+                        inputMode="url"
+                        className="input"
+                        placeholder="https://www.youtube.com/watch?v=… atau https://youtu.be/…"
+                        value={String(values[f.key] ?? "")}
+                        onChange={(e) => set(f.key, e.target.value)}
+                      />
+                      {Boolean(values[f.key]) && (
+                        <button type="button" onClick={() => set(f.key, "")} className="btn-outline btn-sm shrink-0" aria-label="Hapus link video">
+                          <X className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+                    {(() => {
+                      const yt = parseVideoUrl(String(values[f.key] ?? ""));
+                      return yt?.kind === "youtube" ? (
+                        <div className="relative aspect-video max-w-md overflow-hidden rounded-xl bg-charcoal-900">
+                          <iframe
+                            src={`https://www.youtube-nocookie.com/embed/${yt.id}?rel=0`}
+                            title="Pratinjau video YouTube"
+                            className="absolute inset-0 h-full w-full"
+                            allow="accelerometer; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                          />
+                        </div>
+                      ) : null;
+                    })()}
+                  </div>
                 ) : (
                   <input
                     id={`s-${f.key}`}

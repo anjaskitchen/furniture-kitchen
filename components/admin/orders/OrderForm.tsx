@@ -30,6 +30,7 @@ export interface OrderFormPayment {
   kind: string;
   reference: string;
   note: string;
+  account_id?: string;
 }
 export interface OrderFormValues {
   id: string | null;
@@ -112,16 +113,19 @@ export function OrderForm({
   categories,
   workDaysPerWeek = 6,
   paymentKinds,
+  cashAccounts,
   hpp,
 }: {
   initial: OrderFormValues;
   categories: string[];
   workDaysPerWeek?: number;
   paymentKinds?: { code: string; label: string; is_active: boolean }[];
+  cashAccounts?: { id: string; name: string; kind: string; is_default: boolean }[];
   /** Hanya untuk admin utama: tautan ke kalkulator HPP; hasDetail = HPP dihitung dari rincian item. */
   hpp?: { href: string; hasDetail: boolean } | null;
 }) {
   const kinds = paymentKinds?.length ? paymentKinds : PAYMENT_KINDS.map((k) => ({ code: k.value as string, label: k.label as string, is_active: true }));
+  const accounts = cashAccounts ?? [];
   const router = useRouter();
   const toast = useToast();
   const [v, setV] = useState<OrderFormValues>(initial);
@@ -174,7 +178,16 @@ export function OrderForm({
           length_m: hasDims(i) ? parseQty(i.length_m) : null,
           height_m: hasDims(i) ? parseQty(i.height_m) : null,
         })),
-        payments: v.payments.map((p) => ({ paid_at: p.paid_at, amount: p.amount, method: p.method, kind: p.kind, reference: p.reference, note: p.note })),
+        payments: v.payments.map((p) => ({
+          id: UUID_RE.test(p.key) ? p.key : null,
+          paid_at: p.paid_at,
+          amount: p.amount,
+          method: p.method,
+          kind: p.kind,
+          reference: p.reference,
+          note: p.note,
+          ...(accounts.length ? { account_id: p.account_id || null } : {}),
+        })),
       };
       const res = await saveOrder(payload);
       if (!res.ok) {
@@ -220,6 +233,7 @@ export function OrderForm({
         kind: v.payments.length === 0 ? "dp" : fillBalance ? "pelunasan" : "termin",
         reference: "",
         note: "",
+        account_id: "",
       },
     ]);
 
@@ -561,37 +575,60 @@ export function OrderForm({
             {v.payments.length ? (
               <ul className="space-y-3">
                 {v.payments.map((p, i) => (
-                  <li key={p.key} className="grid grid-cols-2 gap-2 rounded-xl bg-cream-50 p-3 ring-1 ring-charcoal-900/5 md:grid-cols-[140px_120px_140px_1fr_160px_36px] md:items-center md:bg-transparent md:p-0 md:ring-0">
-                    <input aria-label={`Tanggal bayar ${i + 1}`} type="date" className="input" value={p.paid_at} onChange={(e) => setPayment(p.key, { paid_at: e.target.value })} />
-                    <select aria-label={`Jenis pembayaran ${i + 1}`} className="input" value={p.kind} onChange={(e) => setPayment(p.key, { kind: e.target.value })}>
-                      {kinds
-                        .filter((k) => k.is_active || k.code === p.kind)
-                        .map((k) => (
-                          <option key={k.code} value={k.code}>
-                            {k.label}
+                  <li key={p.key} className="rounded-xl bg-cream-50 p-3 ring-1 ring-charcoal-900/5 md:bg-transparent md:p-0 md:ring-0">
+                    <div className="grid grid-cols-2 gap-2 md:grid-cols-[140px_120px_140px_1fr_160px_36px] md:items-center">
+                      <input aria-label={`Tanggal bayar ${i + 1}`} type="date" className="input" value={p.paid_at} onChange={(e) => setPayment(p.key, { paid_at: e.target.value })} />
+                      <select aria-label={`Jenis pembayaran ${i + 1}`} className="input" value={p.kind} onChange={(e) => setPayment(p.key, { kind: e.target.value })}>
+                        {kinds
+                          .filter((k) => k.is_active || k.code === p.kind)
+                          .map((k) => (
+                            <option key={k.code} value={k.code}>
+                              {k.label}
+                            </option>
+                          ))}
+                      </select>
+                      <select aria-label={`Metode pembayaran ${i + 1}`} className="input" value={p.method} onChange={(e) => setPayment(p.key, { method: e.target.value })}>
+                        {PAYMENT_METHODS.map((m) => (
+                          <option key={m.value} value={m.value}>
+                            {m.label}
                           </option>
                         ))}
-                    </select>
-                    <select aria-label={`Metode pembayaran ${i + 1}`} className="input" value={p.method} onChange={(e) => setPayment(p.key, { method: e.target.value })}>
-                      {PAYMENT_METHODS.map((m) => (
-                        <option key={m.value} value={m.value}>
-                          {m.label}
-                        </option>
-                      ))}
-                    </select>
-                    <input aria-label={`Referensi pembayaran ${i + 1}`} className="input" value={p.reference} onChange={(e) => setPayment(p.key, { reference: e.target.value })} placeholder="No. ref / catatan" />
-                    <div className="col-span-2 md:col-span-1">
-                      <MoneyInput ariaLabel={`Jumlah pembayaran ${i + 1}`} value={p.amount} onChange={(n) => setPayment(p.key, { amount: n })} invalid={Boolean(err(`payments.${i}.amount`))} />
+                      </select>
+                      <input aria-label={`Referensi pembayaran ${i + 1}`} className="input" value={p.reference} onChange={(e) => setPayment(p.key, { reference: e.target.value })} placeholder="No. ref / catatan" />
+                      <div className="col-span-2 md:col-span-1">
+                        <MoneyInput ariaLabel={`Jumlah pembayaran ${i + 1}`} value={p.amount} onChange={(n) => setPayment(p.key, { amount: n })} invalid={Boolean(err(`payments.${i}.amount`))} />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => set("payments", v.payments.filter((x) => x.key !== p.key))}
+                        className="col-span-2 justify-self-end rounded-lg p-2 text-red-600 hover:bg-red-50 md:col-span-1"
+                        aria-label={`Hapus pembayaran ${i + 1}`}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => set("payments", v.payments.filter((x) => x.key !== p.key))}
-                      className="col-span-2 justify-self-end rounded-lg p-2 text-red-600 hover:bg-red-50 md:col-span-1"
-                      aria-label={`Hapus pembayaran ${i + 1}`}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                    {err(`payments.${i}.amount`) && <p className="col-span-2 text-xs text-red-600 md:col-span-6">{err(`payments.${i}.amount`)}</p>}
+                    {accounts.length > 0 && (
+                      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-charcoal-700">
+                        <label htmlFor={`p-acc-${p.key}`} className="font-medium">
+                          Masuk ke akun kas:
+                        </label>
+                        <select
+                          id={`p-acc-${p.key}`}
+                          aria-label={`Akun kas pembayaran ${i + 1}`}
+                          className="input !w-auto !py-1.5 text-xs"
+                          value={p.account_id ?? ""}
+                          onChange={(e) => setPayment(p.key, { account_id: e.target.value })}
+                        >
+                          <option value="">Otomatis (sesuai metode bayar)</option>
+                          {accounts.map((a) => (
+                            <option key={a.id} value={a.id}>
+                              {a.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                    {err(`payments.${i}.amount`) && <p className="mt-1 text-xs text-red-600">{err(`payments.${i}.amount`)}</p>}
                   </li>
                 ))}
               </ul>

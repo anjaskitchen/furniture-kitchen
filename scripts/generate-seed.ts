@@ -41,6 +41,7 @@ sql += insert("reviews", d.demoReviews as unknown as Row[]);
 sql += insert("home_sections", d.demoHomeSections as unknown as Row[]);
 sql += insert("features", d.demoFeatures as unknown as Row[]);
 sql += insert("faqs", d.demoFaqs as unknown as Row[]);
+sql += insert("clients", d.demoClients as unknown as Row[]);
 
 writeFileSync(join(import.meta.dirname, "..", "supabase", "seed.sql"), sql);
 console.log("supabase/seed.sql written");

@@ -69,6 +69,7 @@ export function orderToForm(o: OrderRow, items: OrderItemRow[], payments: OrderP
       kind: p.kind,
       reference: p.reference ?? "",
       note: p.note ?? "",
+      account_id: p.account_id ?? "",
     })),
   };
 }

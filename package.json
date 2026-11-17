@@ -2,6 +2,7 @@
   "name": "furniture-website",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "node scripts/db.mjs setup --if-configured && next build",
