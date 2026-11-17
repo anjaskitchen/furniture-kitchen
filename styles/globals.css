@@ -113,3 +113,125 @@
   opacity: 1;
   transform: none;
 }
+
+/* =====================================================================
+   ADMIN — lapisan visual khusus panel admin (hanya di dalam .admin-app,
+   tidak memengaruhi website publik).
+   ===================================================================== */
+.admin-app {
+  background-color: #f6f3ec;
+  background-image:
+    radial-gradient(60rem 28rem at 100% -6rem, rgba(200, 164, 106, 0.16), transparent 60%),
+    radial-gradient(48rem 26rem at -10% 110%, rgba(154, 107, 67, 0.1), transparent 60%),
+    radial-gradient(rgba(28, 28, 28, 0.045) 1px, transparent 1px);
+  background-size: auto, auto, 22px 22px;
+  background-attachment: fixed;
+}
+.admin-app ::selection {
+  background: rgba(200, 164, 106, 0.35);
+}
+
+/* Halaman muncul halus saat berpindah menu (opacity saja agar elemen fixed/sticky aman). */
+@keyframes admin-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.admin-main > * {
+  animation: admin-fade 0.3s ease-out;
+}
+
+/* Kartu putih: bayangan lembut berlapis (ring Tailwind tetap dipakai). */
+.admin-app .admin-main :is(section, div, a, form, article, aside, li).bg-white:is(.rounded-2xl, .rounded-3xl) {
+  --tw-shadow: 0 1px 2px rgba(18, 18, 18, 0.04), 0 14px 32px -22px rgba(18, 18, 18, 0.22);
+  --tw-ring-color: rgba(28, 28, 28, 0.07);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+
+/* Tombol: sudut "aplikasi" (bukan pil) + respons tekan. */
+.admin-app :is(.btn, .btn-primary, .btn-outline, .btn-accent, .btn-whatsapp) {
+  border-radius: 0.8rem;
+  transition-duration: 0.18s;
+}
+.admin-app :is(.btn, .btn-primary, .btn-outline, .btn-accent, .btn-whatsapp):active:not(:disabled) {
+  transform: scale(0.98);
+}
+.admin-app .btn-primary {
+  box-shadow: 0 10px 22px -14px rgba(18, 18, 18, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+.admin-app .btn-outline {
+  background-color: rgba(255, 255, 255, 0.85);
+  border-color: rgba(28, 28, 28, 0.14);
+}
+
+/* Form */
+.admin-app .input {
+  border-color: rgba(28, 28, 28, 0.13);
+  box-shadow: 0 1px 2px rgba(18, 18, 18, 0.03);
+}
+.admin-app .input:hover:not(:focus):not(:disabled) {
+  border-color: rgba(28, 28, 28, 0.28);
+}
+.admin-app .input:focus {
+  border-color: #b08d57;
+  box-shadow: 0 0 0 4px rgba(200, 164, 106, 0.2);
+}
+
+/* Tabel */
+.admin-app .admin-main thead th {
+  letter-spacing: 0.02em;
+}
+.admin-app .admin-main tbody tr {
+  transition: background-color 0.15s ease;
+}
+
+/* Scrollbar tipis */
+.admin-app,
+.admin-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(28, 28, 28, 0.25) transparent;
+}
+.admin-scroll {
+  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+}
+.admin-app ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+.admin-app ::-webkit-scrollbar-thumb {
+  background: rgba(28, 28, 28, 0.18);
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+.admin-app .admin-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.16);
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+
+/* Kartu "hero" gelap dengan kilau (dashboard). */
+.admin-hero {
+  background-color: #141414;
+  background-image:
+    radial-gradient(42rem 20rem at 0% 0%, rgba(200, 164, 106, 0.3), transparent 60%),
+    radial-gradient(36rem 18rem at 100% 100%, rgba(154, 107, 67, 0.32), transparent 62%),
+    linear-gradient(135deg, #1c1c1c, #101010);
+}
+.admin-hero-grid {
+  background-image: linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 34px 34px;
+  mask-image: radial-gradient(70% 90% at 80% 10%, black, transparent 75%);
+  -webkit-mask-image: radial-gradient(70% 90% at 80% 10%, black, transparent 75%);
+}
+.admin-app .admin-main a.bg-white:is(.rounded-2xl, .rounded-3xl):hover {
+  --tw-shadow: 0 2px 4px rgba(18, 18, 18, 0.05), 0 22px 40px -22px rgba(18, 18, 18, 0.32);
+}
+
+/* Munculnya popover/palette: hanya gerak (tanpa opacity) agar tidak pernah "nyangkut" transparan. */
+@keyframes admin-pop {
+  from { transform: translateY(6px) scale(0.985); }
+  to { transform: none; }
+}
+.admin-pop {
+  animation: admin-pop 0.16s ease-out;
+}

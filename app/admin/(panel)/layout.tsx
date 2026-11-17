@@ -44,6 +44,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   return (
     <AdminShell
       businessName={settings.business_name}
+      logoUrl={settings.logo_url}
       userLabel={accountLabel(user)}
       role={user.role}
       initialCollapsed={cookieStore.get(SIDEBAR_COOKIE)?.value === "collapsed"}

@@ -144,6 +144,7 @@ export default async function Dashboard() {
     { count: newMessages, label: "pesan kontak baru", href: "/admin/messages", icon: Mail },
     { count: pendingSubs, label: "submission menunggu approval", href: "/admin/submissions", icon: Inbox },
   ].filter((a) => a.count > 0);
+  const attentionTotal = attention.reduce((a, x) => a + x.count, 0);
 
   const stats = [
     { label: "Total leads", value: surveys + messages, sub: `${leads6} dalam 6 bulan`, icon: TrendingUp, href: "/admin/surveys" },
@@ -164,36 +165,109 @@ export default async function Dashboard() {
 
   return (
     <>
-      <div className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="text-sm text-charcoal-700">
-            {new Date().toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Jakarta" })}
-          </p>
-          <h1 className="mt-1 text-2xl font-bold sm:text-3xl">
-            {greeting()}, {accountLabel(user)}
-          </h1>
+      {/* Hero: sapaan, aksi cepat, dan ringkasan penjualan bulan ini */}
+      <section className="admin-hero relative mb-6 overflow-hidden rounded-3xl p-5 text-cream-50 shadow-[0_30px_60px_-30px_rgba(18,18,18,0.7)] sm:p-7">
+        <div className="admin-hero-grid pointer-events-none absolute inset-0" aria-hidden />
+        <div className="relative flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+          <div className="min-w-0">
+            <p className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs text-cream-200/90 ring-1 ring-inset ring-white/10">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)]" aria-hidden />
+              {new Date().toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Jakarta" })}
+            </p>
+            <h1 className="mt-3 text-2xl font-bold tracking-tight sm:text-3xl">
+              {greeting()}, {accountLabel(user)}
+            </h1>
+            <p className="mt-1.5 text-sm text-cream-200/75">
+              {attentionTotal > 0 ? (
+                <>
+                  Ada <strong className="text-bronze-300">{attentionTotal} hal</strong> yang menunggu tindakan Anda hari ini.
+                </>
+              ) : (
+                "Semua beres. Tidak ada leads atau kiriman yang menunggu."
+              )}
+            </p>
+          </div>
+          <div className="-mx-5 flex gap-2 overflow-x-auto px-5 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0 lg:max-w-md lg:justify-end">
+            {quick.map(({ label, href, icon: Icon }, i) => (
+              <Link
+                key={href}
+                href={href}
+                className={cn(
+                  "inline-flex shrink-0 items-center gap-2 rounded-xl px-3.5 py-2.5 text-sm font-medium transition",
+                  i === 0 ? "bg-bronze-400 text-charcoal-950 hover:bg-bronze-300" : "bg-white/10 text-cream-50 ring-1 ring-inset ring-white/10 hover:bg-white/20",
+                )}
+              >
+                <Icon className="h-4 w-4" /> {label}
+              </Link>
+            ))}
+          </div>
         </div>
-        <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0 sm:pb-0">
-          {quick.map(({ label, href, icon: Icon }) => (
-            <Link key={href} href={href} className="btn-outline btn-sm shrink-0 bg-white !py-2.5">
-              <Icon className="h-3.5 w-3.5" /> {label}
-            </Link>
-          ))}
-        </div>
-      </div>
+
+        {sales && (
+          <div className="relative mt-6">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <h2 className="text-xs font-semibold uppercase tracking-[0.16em] text-cream-200/60">Penjualan bulan ini</h2>
+              <Link href="/admin/reports" className="inline-flex items-center gap-1 text-sm text-bronze-300 hover:underline">
+                Laporan lengkap <ArrowUpRight className="h-4 w-4" />
+              </Link>
+            </div>
+            <dl className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+              {[
+                {
+                  label: "Omset",
+                  value: formatCompactRupiah(sales.current.revenue),
+                  sub: (
+                    <>
+                      <Delta current={sales.current.revenue} previous={sales.previous.revenue} /> vs bulan lalu
+                    </>
+                  ),
+                },
+                { label: "Kas masuk", value: formatCompactRupiah(sales.current.cash_in), sub: `${sales.current.payments} pembayaran` },
+                {
+                  label: "Piutang",
+                  value: formatCompactRupiah(sales.receivables.amount),
+                  sub: sales.receivables.overdue_orders ? `${sales.receivables.overdue_orders} lewat jatuh tempo` : `${sales.receivables.orders} belum lunas`,
+                  alert: Boolean(sales.receivables.overdue_orders),
+                },
+                { label: "Order berjalan", value: String(activeOrders), sub: `${sales.current.orders} order baru bulan ini` },
+              ].map((k) => (
+                <div key={k.label} className="rounded-2xl bg-white/[0.07] p-4 ring-1 ring-inset ring-white/10 backdrop-blur-sm">
+                  <dt className="text-xs text-cream-200/70">{k.label}</dt>
+                  <dd className="mt-1 font-display text-xl font-bold tabular-nums sm:text-2xl">{k.value}</dd>
+                  <dd className={cn("mt-0.5 text-xs", k.alert ? "text-red-300" : "text-cream-200/70")}>{k.sub}</dd>
+                </div>
+              ))}
+            </dl>
+            {monthTarget > 0 && (
+              <div className="mt-4">
+                <div className="flex justify-between text-xs text-cream-200/80">
+                  <span>Target bulan ini {formatCompactRupiah(monthTarget)}</span>
+                  <span className="font-semibold text-cream-50">{Math.round((sales.current.revenue / monthTarget) * 100)}%</span>
+                </div>
+                <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-white/10">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-bronze-300 to-bronze-500 shadow-[0_0_14px_rgba(200,164,106,0.7)]"
+                    style={{ width: `${Math.min(100, (sales.current.revenue / monthTarget) * 100)}%` }}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </section>
 
       {attention.length > 0 && (
         <section aria-label="Perlu tindakan" className="mb-6 grid gap-3 sm:grid-cols-3">
           {attention.map(({ count, label, href, icon: Icon }) => (
-            <Link key={href} href={href} className="group flex items-center gap-3 rounded-2xl bg-charcoal-900 p-4 text-cream-50 transition hover:bg-wood-600">
-              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white/10">
-                <Icon className="h-5 w-5 text-bronze-300" />
+            <Link key={href} href={href} className="group flex items-center gap-3 rounded-2xl bg-white p-4 ring-1 ring-charcoal-900/5 transition hover:-translate-y-0.5">
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-600/15">
+                <Icon className="h-5 w-5" />
               </span>
-              <span className="flex-1 text-sm">
-                <strong className="block font-display text-xl">{count}</strong>
+              <span className="flex-1 text-sm text-charcoal-700">
+                <strong className="block font-display text-xl text-charcoal-900">{count}</strong>
                 {label}
               </span>
-              <ArrowUpRight className="h-4 w-4 opacity-60 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:opacity-100" />
+              <ArrowUpRight className="h-4 w-4 text-charcoal-700/40 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-wood-600" />
             </Link>
           ))}
         </section>
@@ -202,54 +276,6 @@ export default async function Dashboard() {
       <Suspense fallback={<div className="mb-8 h-64 animate-pulse rounded-2xl bg-white/60" />}>
         <ErpDashboard isOwner={user.role === "admin"} />
       </Suspense>
-
-      {sales && (
-        <section aria-label="Penjualan bulan ini" className="mb-6 rounded-2xl bg-charcoal-900 p-5 text-cream-50 sm:p-6">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="font-display text-lg font-semibold">Penjualan bulan ini</h2>
-            <Link href="/admin/reports" className="inline-flex items-center gap-1 text-sm text-bronze-300 hover:underline">
-              Laporan lengkap <ArrowUpRight className="h-4 w-4" />
-            </Link>
-          </div>
-          <dl className="mt-5 grid grid-cols-2 gap-x-4 gap-y-5 lg:grid-cols-4">
-            <div>
-              <dt className="text-xs text-cream-200/70">Omset</dt>
-              <dd className="mt-1 font-display text-2xl font-bold tabular-nums">{formatCompactRupiah(sales.current.revenue)}</dd>
-              <dd className="mt-0.5 text-xs text-cream-200/70">
-                <Delta current={sales.current.revenue} previous={sales.previous.revenue} /> vs bulan lalu
-              </dd>
-            </div>
-            <div>
-              <dt className="text-xs text-cream-200/70">Kas masuk</dt>
-              <dd className="mt-1 font-display text-2xl font-bold tabular-nums">{formatCompactRupiah(sales.current.cash_in)}</dd>
-              <dd className="mt-0.5 text-xs text-cream-200/70">{sales.current.payments} pembayaran</dd>
-            </div>
-            <div>
-              <dt className="text-xs text-cream-200/70">Piutang</dt>
-              <dd className="mt-1 font-display text-2xl font-bold tabular-nums">{formatCompactRupiah(sales.receivables.amount)}</dd>
-              <dd className={cn("mt-0.5 text-xs", sales.receivables.overdue_orders ? "text-red-300" : "text-cream-200/70")}>
-                {sales.receivables.overdue_orders ? `${sales.receivables.overdue_orders} lewat jatuh tempo` : `${sales.receivables.orders} belum lunas`}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-xs text-cream-200/70">Order berjalan</dt>
-              <dd className="mt-1 font-display text-2xl font-bold tabular-nums">{activeOrders}</dd>
-              <dd className="mt-0.5 text-xs text-cream-200/70">{sales.current.orders} order baru bulan ini</dd>
-            </div>
-          </dl>
-          {monthTarget > 0 && (
-            <div className="mt-5">
-              <div className="flex justify-between text-xs text-cream-200/80">
-                <span>Target {formatCompactRupiah(monthTarget)}</span>
-                <span className="font-semibold text-cream-50">{Math.round((sales.current.revenue / monthTarget) * 100)}%</span>
-              </div>
-              <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-white/10">
-                <div className="h-full rounded-full bg-bronze-400" style={{ width: `${Math.min(100, (sales.current.revenue / monthTarget) * 100)}%` }} />
-              </div>
-            </div>
-          )}
-        </section>
-      )}
 
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         {stats.map(({ label, value, sub, icon: Icon, href }) => (
